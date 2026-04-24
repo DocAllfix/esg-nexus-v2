@@ -1,12 +1,14 @@
 import { useState } from "react";
 import FormWrapper from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
 
-// TODO: Replace with Supabase hook
-const capitoliBilancio = [];
-
-const STORAGE_KEY = "esg_form_06C";
-const CAPITOLI_SOCIALE = capitoliBilancio.filter(c => c.n >= 9 && c.n <= 12);
+const CAPS_SOCIALE = [
+  { n: 9,  titolo: "Sociale — Persone e organizzazione", target: 1500 },
+  { n: 10, titolo: "Sociale — Salute e sicurezza sul lavoro", target: 1200 },
+  { n: 11, titolo: "Sociale — Sviluppo e formazione", target: 900 },
+  { n: 12, titolo: "Sociale — Filiera e fornitori", target: 1000 },
+];
 
 const STANDARD_PER_CAP = {
   9:  ["GRI 2-7", "GRI 2-8", "GRI 401-1", "GRI 405-1", "ESRS S1-1", "ESRS S1-6"],
@@ -15,89 +17,22 @@ const STANDARD_PER_CAP = {
   12: ["GRI 2-6", "GRI 308-1", "GRI 414-1", "ESRS S2-1", "ESRS S2-4"],
 };
 
-const CONTENUTI_INIZIALI = {
-  9: `## Sociale — Persone e organizzazione
+const toggleArray = (arr, item) => arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item];
 
-Al 31 dicembre 2024, **Acme Manufacturing S.p.A.** conta **252 dipendenti FTE**, di cui 171 uomini (67,9%) e 81 donne (32,1%).
-
-### Composizione della forza lavoro
-
-| Categoria | Totale | Donne | % Donne |
-|-----------|--------|-------|---------|
-| Dirigenti | 12 | 3 | 25,0% |
-| Quadri | 42 | 9 | 21,4% |
-| Impiegati | 98 | 42 | 42,9% |
-| Operai | 100 | 27 | 27,0% |
-| **Totale** | **252** | **81** | **32,1%** |
-
-### Turnover
-
-Il tasso di turnover 2024 è stato dell'8,7%, in linea con il settore manifatturiero (media ISTAT: 9,2%).`,
-  10: `## Sociale — Salute e sicurezza sul lavoro
-
-La tutela della salute e sicurezza dei lavoratori rappresenta una priorità assoluta per Acme Manufacturing.
-
-### Sistema di gestione H&S
-
-Il sistema di gestione H&S è certificato ISO 45001:2018 dal 2022. Il RSPP è integrato nel Comitato ESG a partire dal 2025.
-
-### Indicatori di performance
-
-- **TRIR (Total Recordable Incident Rate) 2024**: 1,8 per milione di ore lavorate
-- **LTI (Lost Time Injuries)**: 3 infortuni con assenza dal lavoro (0 gravi)
-- **Malattie professionali**: 0 casi accertati nel 2024
-- **Ore di formazione H&S**: 4.860 ore totali (19,3 ore/dipendente)
-
-### Obiettivo 2026
-
-Riduzione del TRIR a meno di 1,0 attraverso il programma "Zero Harm".`,
-  11: `## Sociale — Sviluppo e formazione
-
-### Investimento in formazione
-
-Nel 2024 sono state erogate **6.174 ore di formazione**, con una media di **24,5 ore per dipendente**, superando il target annuale di 20 ore.
-
-**Ripartizione per tipologia:**
-- Formazione tecnico-professionale: 48%
-- Formazione manageriale e leadership: 22%
-- Formazione HSE: 18%
-- Formazione ESG e sostenibilità: 8%
-- Formazione linguistica e digitale: 4%
-
-### Piano di sviluppo individuale (PDI)
-
-Il 78% dei dipendenti ha un Piano di Sviluppo Individuale attivo, aggiornato nel colloquio annuale di performance review.`,
-  12: `## Sociale — Filiera e fornitori
-
-### Catena di fornitura
-
-Acme Manufacturing si avvale di circa **180 fornitori attivi**, di cui 42 classificati come "critici" (fatturato > 100k€/anno o forniture strategiche).
-
-### Policy di qualifica fornitori
-
-Tutti i nuovi fornitori sono soggetti a questionario di qualifica che include criteri ESG. Dal 2025 è in corso l'estensione della valutazione ESG a tutti i fornitori critici esistenti.
-
-### Obiettivo 2026
-
-Completamento audit ESG (questionario + visita on-site) su tutti i 42 fornitori critici. Inserimento di clausole ESG contrattuali in tutti i nuovi contratti quadro.`,
-};
-
-export default function Form06C() {
+export default function Form06C({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "06C");
   const [capSel, setCapSel] = useState(9);
-  const [contenuti, setContenuti] = useState(CONTENUTI_INIZIALI);
-  const [stdChecked, setStdChecked] = useState({
-    9: new Set(["GRI 2-7", "GRI 405-1", "ESRS S1-1"]),
-    10: new Set(["GRI 403-9", "ESRS S1-14"]),
-    11: new Set(["GRI 404-1", "ESRS S1-13"]),
-    12: new Set(["GRI 414-1", "ESRS S2-1"]),
-  });
 
-  const toggleStd = (s) => setStdChecked(p => {
-    const ns = new Set(p[capSel]); ns.has(s) ? ns.delete(s) : ns.add(s); return { ...p, [capSel]: ns };
-  });
+  const contenuti = d?.contenuti ?? {};
+  const stdChecked = d?.std_checked ?? {};
 
-  const cap = CAPITOLI_SOCIALE.find(c => c.n === capSel);
-  const parole = (contenuti[capSel] || "").trim().split(/\s+/).length;
+  const toggleStd = (s) => {
+    const arr = stdChecked[capSel] || [];
+    updateField("std_checked", { ...stdChecked, [capSel]: toggleArray(arr, s) });
+  };
+
+  const cap = CAPS_SOCIALE.find(c => c.n === capSel);
+  const parole = (contenuti[capSel] || "").trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <FormWrapper
@@ -105,13 +40,15 @@ export default function Form06C() {
       title="Stesura Sezione Sociale"
       subtitle="Editor capitoli 9-12: Persone, H&S, Formazione, Filiera"
       meta={{ "Capitoli": "9, 10, 11, 12", "Resp.": "Elena Mancini / Luca Ferri", "Output": "Testi approvati" }}
-      ruleBox="✍️ Tutti i dati sociali devono provenire dal dataset validato in PROC-04 (Form 04E). Riferire sempre l'anno di rendicontazione (FY2024)."
+      ruleBox="Tutti i dati sociali devono provenire dal dataset validato in PROC-04 (Form 04E). Riferire sempre l'anno di rendicontazione."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit">
-        {CAPITOLI_SOCIALE.map(c => (
+        {CAPS_SOCIALE.map(c => (
           <button key={c.n} onClick={() => setCapSel(c.n)} className={cn("px-3 py-1.5 rounded-md text-sm font-medium transition-colors", capSel === c.n ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
             Cap. {c.n}
           </button>
@@ -132,8 +69,9 @@ export default function Form06C() {
             </div>
             <textarea
               value={contenuti[capSel] || ""}
-              onChange={e => setContenuti(p => ({ ...p, [capSel]: e.target.value }))}
+              onChange={e => updateField("contenuti", { ...contenuti, [capSel]: e.target.value })}
               className="flex-1 p-4 text-sm leading-relaxed resize-none focus:outline-none bg-background font-mono"
+              placeholder="Inserire il testo del capitolo in formato Markdown..."
             />
           </div>
           <div className="w-52 shrink-0 border-l border-border p-4 bg-muted/10 overflow-y-auto">
@@ -141,7 +79,7 @@ export default function Form06C() {
             <div className="space-y-2">
               {(STANDARD_PER_CAP[capSel] || []).map(s => (
                 <label key={s} className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input type="checkbox" checked={stdChecked[capSel]?.has(s) || false} onChange={() => toggleStd(s)} className="accent-primary" />
+                  <input type="checkbox" checked={(stdChecked[capSel] || []).includes(s)} onChange={() => toggleStd(s)} className="accent-primary" />
                   <span className={cn("font-mono", s.startsWith("ESRS") ? "text-purple-700" : "text-blue-700")}>{s}</span>
                 </label>
               ))}
@@ -149,10 +87,10 @@ export default function Form06C() {
             <div className="mt-4 pt-3 border-t border-border">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">KPI riferimento</p>
               <div className="text-xs text-muted-foreground space-y-1">
-                {capSel === 9 && <><p>• S-01: FTE → 252</p><p>• S-04: % Donne → 32,4%</p><p>• S-07: Turnover → 8,7%</p></>}
-                {capSel === 10 && <><p>• S-02: TRIR → 1,8</p></>}
-                {capSel === 11 && <><p>• S-03: Ore formaz. → 24,5h</p></>}
-                {capSel === 12 && <><p>• Fornitori critici → 42</p></>}
+                {capSel === 9 && <><p>• S-01: FTE</p><p>• S-04: % Donne</p><p>• S-07: Turnover</p></>}
+                {capSel === 10 && <><p>• S-02: TRIR</p></>}
+                {capSel === 11 && <><p>• S-03: Ore formazione</p></>}
+                {capSel === 12 && <><p>• Fornitori critici</p></>}
               </div>
             </div>
           </div>

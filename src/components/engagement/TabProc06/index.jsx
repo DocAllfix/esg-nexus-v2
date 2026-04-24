@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form06A from "./Form06A";
 import Form06B from "./Form06B";
 import Form06C from "./Form06C";
@@ -12,34 +13,28 @@ import Form06H from "./Form06H";
 import Form06LOG from "./Form06LOG";
 
 const FASI = [
-  { code: "06A", label: "Struttura Capitoli", sub: "Fase 6.1", component: Form06A },
-  { code: "06B", label: "Stesura Ambiente (E)", sub: "Cap. 6-7-8", component: Form06B },
-  { code: "06C", label: "Stesura Sociale (S)", sub: "Cap. 9-12", component: Form06C },
-  { code: "06D", label: "Stesura Governance (G)", sub: "Cap. 3, 13", component: Form06D },
-  { code: "06E", label: "Piano Editoriale", sub: "Fase 6.5", component: Form06E },
-  { code: "06F", label: "Content Index GRI/ESRS", sub: "Fase 6.6", component: Form06F },
-  { code: "06G", label: "Assurance Esterna", sub: "Fase 6.7", component: Form06G },
-  { code: "06H", label: "Pubblicazione / CdA", sub: "Fase 6.8", component: Form06H },
-  { code: "06LOG", label: "Chiusura Fase 6", sub: "LOG-06", component: Form06LOG },
+  { code: "06A",   label: "Struttura Capitoli",    component: Form06A },
+  { code: "06B",   label: "Stesura Ambiente (E)",  component: Form06B },
+  { code: "06C",   label: "Stesura Sociale (S)",   component: Form06C },
+  { code: "06D",   label: "Stesura Governance (G)", component: Form06D },
+  { code: "06E",   label: "Piano Editoriale",      component: Form06E },
+  { code: "06F",   label: "Content Index GRI/ESRS", component: Form06F },
+  { code: "06G",   label: "Assurance Esterna",     component: Form06G },
+  { code: "06H",   label: "Pubblicazione / CdA",   component: Form06H },
+  { code: "06LOG", label: "Chiusura Fase 6",        component: Form06LOG },
 ];
 
 const STATUS_ICONS = {
-  completato: <CheckCircle2 size={14} className="text-green-600 shrink-0" />,
-  in_corso: <Clock size={14} className="text-amber-500 shrink-0" />,
+  completato:   <CheckCircle2 size={14} className="text-green-600 shrink-0" />,
+  in_corso:     <Clock size={14} className="text-amber-500 shrink-0" />,
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc06() {
+export default function TabProc06({ engagementId }) {
   const [active, setActive] = useState("06A");
-  const [statuses] = useState({
-    "06A": "completato", "06B": "in_corso", "06C": "in_corso",
-    "06D": "non_iniziato", "06E": "non_iniziato", "06F": "in_corso",
-    "06G": "non_iniziato", "06H": "non_iniziato", "06LOG": "non_iniziato",
-  });
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-06");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -69,7 +64,7 @@ export default function TabProc06() {
                     : "hover:bg-muted text-foreground"
                 )}
               >
-                {STATUS_ICONS[statuses[fase.code] || "non_iniziato"]}
+                {STATUS_ICONS[statuses?.[fase.code] || "non_iniziato"]}
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-xs font-semibold truncate", active === fase.code ? "text-primary" : "")}>
                     FORM-{fase.code}
@@ -84,7 +79,7 @@ export default function TabProc06() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );

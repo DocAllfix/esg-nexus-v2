@@ -1,39 +1,32 @@
-import { useState } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea, Select } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "esg_form_06G";
 
 const LIVELLI_ASSURANCE = ["Limited assurance", "Reasonable assurance"];
 const ENTI = ["Deloitte", "PwC", "EY", "KPMG", "BDO", "Grant Thornton", "Altro"];
 const STANDARD_ASSURANCE = ["ISAE 3000 Revised", "ISAE 3410 (GHG)", "AA1000AS v3", "IDW AsS 821", "Altro"];
 
 const CHECKLIST_ASSURANCE = [
-  { id: 1, voce: "Dataset GHG (Scope 1, 2, 3) validato in PROC-04", critico: true },
-  { id: 2, voce: "KPI sociali (S-01…S-07) validati con fonti HR", critico: true },
-  { id: 3, voce: "KPI governance (G-01…G-05) validati con verbali CdA", critico: true },
-  { id: 4, voce: "Content Index GRI/ESRS completato (FORM-06F)", critico: true },
-  { id: 5, voce: "Nota metodologica GHG Protocol confermata", critico: true },
-  { id: 6, voce: "Perimetro di rendicontazione documentato", critico: true },
-  { id: 7, voce: "Lettera di engagement con società di revisione firmata", critico: true },
-  { id: 8, voce: "Management representation letter firmata dal CEO/CFO", critico: true },
-  { id: 9, voce: "Bozza bilancio inviata alla società per fieldwork", critico: false },
-  { id: 10, voce: "Riscontro osservazioni assurance incorporato nel testo", critico: false },
-  { id: 11, voce: "Relazione assurance ricevuta e firmata", critico: false },
-  { id: 12, voce: "Relazione assurance inserita nel bilancio (appendice)", critico: false },
+  { id: 1,  voce: "Dataset GHG (Scope 1, 2, 3) validato in PROC-04",                     critico: true },
+  { id: 2,  voce: "KPI sociali (S-01…S-07) validati con fonti HR",                        critico: true },
+  { id: 3,  voce: "KPI governance (G-01…G-05) validati con verbali CdA",                  critico: true },
+  { id: 4,  voce: "Content Index GRI/ESRS completato (FORM-06F)",                         critico: true },
+  { id: 5,  voce: "Nota metodologica GHG Protocol confermata",                            critico: true },
+  { id: 6,  voce: "Perimetro di rendicontazione documentato",                             critico: true },
+  { id: 7,  voce: "Lettera di engagement con società di revisione firmata",               critico: true },
+  { id: 8,  voce: "Management representation letter firmata dal CEO/CFO",                 critico: true },
+  { id: 9,  voce: "Bozza bilancio inviata alla società per fieldwork",                    critico: false },
+  { id: 10, voce: "Riscontro osservazioni assurance incorporato nel testo",               critico: false },
+  { id: 11, voce: "Relazione assurance ricevuta e firmata",                               critico: false },
+  { id: 12, voce: "Relazione assurance inserita nel bilancio (appendice)",                critico: false },
 ];
 
-export default function Form06G() {
-  const [ente, setEnte] = useState("Deloitte");
-  const [livello, setLivello] = useState("Limited assurance");
-  const [standard_ass, setStandardAss] = useState("ISAE 3000 Revised");
-  const [data_mandato, setDataMandato] = useState("2025-04-01");
-  const [data_rilascio, setDataRilascio] = useState("2025-10-15");
-  const [perimetro, setPerimetro] = useState("Indicatori ambientali (emissioni GHG Scope 1 e 2 MB, consumo energetico, consumo idrico), indicatori sociali (FTE, TRIR, ore formazione, % donne totale e management), indicatori di governance (composizione CdA).");
-  const [osservazioni, setOsservazioni] = useState("L'ente di assurance ha richiesto chiarimenti sul metodo di calcolo del Scope 2 Market-Based e sulla fonte del fattore di emissione gas naturale. Entrambi risolti con documentazione a supporto (contratto GO + DEFRA 2023).");
-  const [checks, setChecks] = useState(CHECKLIST_ASSURANCE);
-  const toggle = (id) => setChecks(p => p.map(c => c.id === id ? { ...c, ok: !c.ok } : c));
+export default function Form06G({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "06G");
+
+  const checks = d?.checks ?? CHECKLIST_ASSURANCE.map(c => ({ ...c, ok: false }));
+  const toggle = (id) => updateField("checks", checks.map(c => c.id === id ? { ...c, ok: !c.ok } : c));
 
   const critiche = checks.filter(c => c.critico);
   const fatte = checks.filter(c => c.ok).length;
@@ -45,13 +38,14 @@ export default function Form06G() {
       formCode="FORM-06G"
       title="Assurance del Bilancio"
       subtitle="Gestione del processo di verifica indipendente (limited/reasonable assurance)"
-      meta={{ "Ente": ente, "Livello": livello, "Standard": standard_ass, "Rilascio previsto": data_rilascio }}
-      ruleBox={tutteOk ? "✅ Prerequisiti assurance completati. Il bilancio è pronto per la fase di fieldwork." : "⚠️ Completare le attività critiche prima di avviare il fieldwork dell'ente di assurance."}
+      meta={{ "Ente": d?.ente || "—", "Livello": d?.livello || "—", "Standard": d?.standard_ass || "—", "Rilascio previsto": d?.data_rilascio || "—" }}
+      ruleBox={tutteOk ? "Prerequisiti assurance completati. Il bilancio è pronto per la fase di fieldwork." : "Completare le attività critiche prima di avviare il fieldwork dell'ente di assurance."}
       ruleBoxType={tutteOk ? "success" : "warning"}
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* STATO AVANZAMENTO */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-muted/40 rounded-lg p-4 text-center border border-border">
           <p className="text-2xl font-bold text-primary">{critiOk}/{critiche.length}</p>
@@ -62,32 +56,32 @@ export default function Form06G() {
           <p className="text-xs text-muted-foreground">Totale completate</p>
         </div>
         <div className={cn("rounded-lg p-4 text-center border", tutteOk ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200")}>
-          <p className={cn("text-sm font-bold", tutteOk ? "text-green-700" : "text-amber-700")}>{tutteOk ? "✅ Pronto" : "⏳ In corso"}</p>
+          <p className={cn("text-sm font-bold", tutteOk ? "text-green-700" : "text-amber-700")}>{tutteOk ? "Pronto" : "In corso"}</p>
           <p className="text-xs text-muted-foreground">Stato assurance</p>
         </div>
       </div>
 
       <FormSection title="Dati mandato assurance">
         <Field label="Società di assurance" required>
-          <Select value={ente} onChange={setEnte} options={ENTI} />
+          <Select value={d?.ente} onChange={v => updateField("ente", v)} options={ENTI} />
         </Field>
         <Field label="Livello di assurance">
-          <Select value={livello} onChange={setLivello} options={LIVELLI_ASSURANCE} />
+          <Select value={d?.livello} onChange={v => updateField("livello", v)} options={LIVELLI_ASSURANCE} />
         </Field>
         <Field label="Standard di riferimento">
-          <Select value={standard_ass} onChange={setStandardAss} options={STANDARD_ASSURANCE} />
+          <Select value={d?.standard_ass} onChange={v => updateField("standard_ass", v)} options={STANDARD_ASSURANCE} />
         </Field>
         <Field label="Data mandato">
-          <Input type="date" value={data_mandato} onChange={setDataMandato} />
+          <Input type="date" value={d?.data_mandato} onChange={v => updateField("data_mandato", v)} />
         </Field>
         <Field label="Data rilascio relazione prevista">
-          <Input type="date" value={data_rilascio} onChange={setDataRilascio} />
+          <Input type="date" value={d?.data_rilascio} onChange={v => updateField("data_rilascio", v)} />
         </Field>
         <Field label="Perimetro degli indicatori soggetti ad assurance" span={2}>
-          <Textarea value={perimetro} onChange={setPerimetro} rows={2} />
+          <Textarea value={d?.perimetro} onChange={v => updateField("perimetro", v)} rows={2} />
         </Field>
         <Field label="Osservazioni ricevute e azioni intraprese" span={2}>
-          <Textarea value={osservazioni} onChange={setOsservazioni} rows={2} />
+          <Textarea value={d?.osservazioni} onChange={v => updateField("osservazioni", v)} rows={2} />
         </Field>
       </FormSection>
 
