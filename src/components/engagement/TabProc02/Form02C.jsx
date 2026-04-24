@@ -1,12 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import FormWrapper, { FormSection, Field, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Label } from "recharts";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const irosAcme = [];
-
-const STORAGE_KEY = "esg_form_02C";
 
 const AREA_COLORS_DOT = { E: "#10B981", S: "#6366F1", G: "#8B5CF6" };
 const CAT_BADGE = {
@@ -42,22 +38,23 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function Form02C() {
-  const [soglia_impatto] = useState(3.0);
-  const [soglia_fin] = useState(8.0);
-  const [note, setNote] = useState("La matrice di materialità evidenzia 9 temi in doppia materialità, con il Cambiamento Climatico e la Salute e Sicurezza come temi prioritari assoluti. La Governance della Sostenibilità emerge come tema di doppia materialità per la forte correlazione tra struttura di governo e performance ESG.");
+export default function Form02C({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02C");
   const [sortBy, setSortBy] = useState("score_impatto");
 
-  const irosCalcolati = useMemo(() => irosAcme.map(iro => ({
-    ...iro,
-    categoria: iro.score_impatto >= soglia_impatto && iro.score_finanziario >= soglia_fin ? "DOPPIA"
-      : iro.score_impatto >= soglia_impatto ? "SOLO_IMPATTO"
-      : iro.score_finanziario >= soglia_fin ? "SOLO_FINANZIARIA"
-      : "NON_MATERIALE",
-  })), [soglia_impatto, soglia_fin]);
+  const soglia_impatto = d?.soglia_impatto ?? 3.0;
+  const soglia_fin = d?.soglia_fin ?? 8.0;
+  const irosData = d?.iros_data ?? [];
 
-  const sorted = [...irosCalcolati].sort((a, b) => b[sortBy] - a[sortBy]);
-  const materiali = irosCalcolati.filter(i => i.categoria !== "NON_MATERIALE");
+  const irosCalcolati = irosData.map(iro => ({
+    ...iro,
+    categoria: (iro.score_impatto || 0) >= soglia_impatto && (iro.score_finanziario || 0) >= soglia_fin ? "DOPPIA"
+      : (iro.score_impatto || 0) >= soglia_impatto ? "SOLO_IMPATTO"
+      : (iro.score_finanziario || 0) >= soglia_fin ? "SOLO_FINANZIARIA"
+      : "NON_MATERIALE",
+  }));
+
+  const sorted = [...irosCalcolati].sort((a, b) => (b[sortBy] || 0) - (a[sortBy] || 0));
 
   return (
     <FormWrapper
@@ -67,10 +64,11 @@ export default function Form02C() {
       meta={{ "Fase": "PROC-02.3", "Resp.": "Consulente Senior + Partner", "Standard": "ESRS 1 / GRI 3-2", "Output": "Matrice approvata dal CdA" }}
       ruleBox="📊 La matrice deve essere presentata al CdA per approvazione formale. I temi in doppia materialità determinano il perimetro del bilancio di sostenibilità."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* LEGENDA */}
       <div className="flex flex-wrap gap-3 items-center">
         {[["E", "#10B981", "Ambiente"], ["S", "#6366F1", "Sociale"], ["G", "#8B5CF6", "Governance"]].map(([k, c, l]) => (
           <div key={k} className="flex items-center gap-1.5">
@@ -85,7 +83,6 @@ export default function Form02C() {
         </div>
       </div>
 
-      {/* SCATTER MATRIX */}
       <FormSection title="Matrice di materialità — Score Impatto × Score Finanziario" cols={1}>
         <div className="h-96 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -107,7 +104,6 @@ export default function Form02C() {
         <p className="text-xs text-muted-foreground text-center">Le linee tratteggiate rappresentano le soglie di materialità. Quadrante in alto a destra = Doppia materialità</p>
       </FormSection>
 
-      {/* TABELLA RIEPILOGATIVA ORDINABILE */}
       <FormSection title="Elenco IRO materiali" cols={1}>
         <div className="flex gap-2 mb-3">
           <span className="text-xs text-muted-foreground">Ordina per:</span>
@@ -139,8 +135,8 @@ export default function Form02C() {
                     <span className="w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white" style={{ background: AREA_COLORS_DOT[iro.area] }}>{iro.area}</span>
                   </td>
                   <td className="px-3 py-2 text-center">{iro.tipo}</td>
-                  <td className="px-3 py-2 text-center font-bold">{iro.score_impatto.toFixed(1)}</td>
-                  <td className="px-3 py-2 text-center font-bold">{iro.score_finanziario.toFixed(1)}</td>
+                  <td className="px-3 py-2 text-center font-bold">{(iro.score_impatto || 0).toFixed(1)}</td>
+                  <td className="px-3 py-2 text-center font-bold">{(iro.score_finanziario || 0).toFixed(1)}</td>
                   <td className="px-3 py-2 text-center">
                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium border", CAT_BADGE[iro.categoria])}>
                       {iro.categoria.replace("_", " ")}
@@ -155,7 +151,7 @@ export default function Form02C() {
 
       <FormSection title="Commento analitico" cols={1}>
         <Field label="Sintesi e motivazione dei risultati della matrice">
-          <Textarea value={note} onChange={setNote} rows={4} />
+          <Textarea value={d?.note_analitiche} onChange={v => updateField("note_analitiche", v)} rows={4} />
         </Field>
       </FormSection>
     </FormWrapper>

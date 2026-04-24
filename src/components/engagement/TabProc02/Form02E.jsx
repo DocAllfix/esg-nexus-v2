@@ -1,9 +1,7 @@
-import { useState } from "react";
-import FormWrapper, { FormSection, Field, Input, Textarea, Select } from "@/components/common/FormWrapper";
-import { CheckCircle2, Circle, AlertCircle } from "lucide-react";
+import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
+import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "esg_form_02E";
 
 const CHECKLIST_ITEMS = [
   { id: 1, categoria: "Processo", voce: "Stakeholder mapping completato (FORM-02A) con almeno 5 gruppi identificati", req: "obbligatorio" },
@@ -20,26 +18,27 @@ const CHECKLIST_ITEMS = [
   { id: 12, categoria: "Qualità", voce: "Allineamento con ESRS 1 §AR 1-16 verificato", req: "raccomandato" },
 ];
 
-const INITIAL_CHECKLIST = CHECKLIST_ITEMS.map(item => ({
-  ...item,
-  fatto: item.id <= 10,
-  note: "",
-}));
+const REQ_COLORS = { obbligatorio: "bg-red-100 text-red-700", raccomandato: "bg-amber-100 text-amber-700" };
 
-export default function Form02E() {
-  const [checklist, setChecklist] = useState(INITIAL_CHECKLIST);
-  const [data_approvazione_cda, setDataApprovazione] = useState("2025-03-28");
-  const [approvato_da, setApprovatoDa] = useState("Marco Rossetti — CEO, con delibera CdA n. 03/2025");
-  const [note_finali, setNoteFinali] = useState("Processo di materialità concluso nei tempi previsti. 11 temi materiali identificati su 15 valutati. La matrice è stata approvata con voto unanime dal CdA del 28/03/2025. Avvio PROC-03 programmato per il 01/04/2025.");
+export default function Form02E({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02E");
 
-  const toggle = (i) => setChecklist(p => { const n = [...p]; n[i] = { ...n[i], fatto: !n[i].fatto }; return n; });
-  const setNote = (i, v) => setChecklist(p => { const n = [...p]; n[i] = { ...n[i], note: v }; return n; });
+  const checklist = d?.checklist ?? CHECKLIST_ITEMS.map(item => ({ ...item, fatto: false, note: "" }));
+
+  const toggle = (i) => {
+    const n = [...checklist];
+    n[i] = { ...n[i], fatto: !n[i].fatto };
+    updateField("checklist", n);
+  };
+  const setNote = (i, v) => {
+    const n = [...checklist];
+    n[i] = { ...n[i], note: v };
+    updateField("checklist", n);
+  };
 
   const obbligatorie = checklist.filter(c => c.req === "obbligatorio");
   const fatteObb = obbligatorie.filter(c => c.fatto).length;
   const tutteOk = fatteObb === obbligatorie.length;
-
-  const REQ_COLORS = { obbligatorio: "bg-red-100 text-red-700", raccomandato: "bg-amber-100 text-amber-700" };
 
   return (
     <FormWrapper
@@ -49,17 +48,18 @@ export default function Form02E() {
       meta={{ "Fase": "Finale PROC-02", "Resp.": "Partner + Consulente Senior", "Output": "Matrice approvata — Avvio PROC-03" }}
       ruleBox={tutteOk ? "✅ Tutte le attività obbligatorie completate. Transizione a PROC-03 autorizzata." : "⚠️ Completare tutte le voci obbligatorie prima di procedere a PROC-03."}
       ruleBoxType={tutteOk ? "success" : "warning"}
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* PROGRESS */}
       <div className={cn("rounded-xl border-2 p-6 text-center", tutteOk ? "border-green-400 bg-green-50" : "border-amber-300 bg-amber-50")}>
         <p className={cn("text-4xl font-bold", tutteOk ? "text-green-700" : "text-amber-700")}>{fatteObb}/{obbligatorie.length}</p>
         <p className={cn("text-sm font-medium mt-1", tutteOk ? "text-green-700" : "text-amber-700")}>
           {tutteOk ? "✅ PROC-02 COMPLETATO — Avvio PROC-03 autorizzato" : "Completare le voci obbligatorie mancanti"}
         </p>
         <div className="w-full h-2 bg-white rounded-full mt-3">
-          <div className={cn("h-full rounded-full transition-all", tutteOk ? "bg-green-500" : "bg-amber-400")} style={{ width: `${(fatteObb / obbligatorie.length) * 100}%` }} />
+          <div className={cn("h-full rounded-full transition-all", tutteOk ? "bg-green-500" : "bg-amber-400")} style={{ width: obbligatorie.length > 0 ? `${(fatteObb / obbligatorie.length) * 100}%` : "0%" }} />
         </div>
       </div>
 
@@ -67,7 +67,7 @@ export default function Form02E() {
         {["Processo", "Analisi", "Governance", "Output", "Qualità"].map(cat => (
           <div key={cat} className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{cat}</p>
-            {checklist.filter(c => c.categoria === cat).map((item, idx) => {
+            {checklist.filter(c => c.categoria === cat).map((item) => {
               const i = checklist.findIndex(c => c.id === item.id);
               return (
                 <div key={item.id} className={cn("rounded-lg border p-3 space-y-2", item.fatto ? "border-green-300 bg-green-50/30" : "border-border hover:bg-muted/20")}>
@@ -79,7 +79,7 @@ export default function Form02E() {
                     <span className={cn("text-xs px-1.5 py-0.5 rounded shrink-0", REQ_COLORS[item.req])}>{item.req}</span>
                   </div>
                   {!item.fatto && (
-                    <input value={item.note} onChange={e => setNote(i, e.target.value)} placeholder="Note / piano d'azione..." className="w-full ml-7 border border-border rounded px-2 py-1 text-xs bg-background" />
+                    <input value={item.note || ""} onChange={e => setNote(i, e.target.value)} placeholder="Note / piano d'azione..." className="w-full ml-7 border border-border rounded px-2 py-1 text-xs bg-background" />
                   )}
                 </div>
               );
@@ -90,13 +90,13 @@ export default function Form02E() {
 
       <FormSection title="Approvazione CdA">
         <Field label="Data approvazione CdA" required>
-          <Input type="date" value={data_approvazione_cda} onChange={setDataApprovazione} />
+          <Input type="date" value={d?.data_approvazione_cda} onChange={v => updateField("data_approvazione_cda", v)} />
         </Field>
         <Field label="Approvato da">
-          <Input value={approvato_da} onChange={setApprovatoDa} />
+          <Input value={d?.approvato_da} onChange={v => updateField("approvato_da", v)} />
         </Field>
         <Field label="Note finali e transizione a PROC-03" span={2}>
-          <Textarea value={note_finali} onChange={setNoteFinali} rows={3} />
+          <Textarea value={d?.note_finali} onChange={v => updateField("note_finali", v)} rows={3} />
         </Field>
       </FormSection>
     </FormWrapper>

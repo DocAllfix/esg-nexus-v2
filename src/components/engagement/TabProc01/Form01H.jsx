@@ -1,7 +1,7 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
-import { useState } from "react";
+import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const SETUP_GRUPPI = [
   {
@@ -60,33 +60,21 @@ const SETUP_GRUPPI = [
   },
 ];
 
-export default function Form01H({ eng }) {
-  const [checked, setChecked] = useState({});
-  const [data, setData] = useState({
-    codice_progetto: eng?.project_code || "",
-    cliente: eng?.cliente_nome || "",
-    pm: eng?.responsabile || "",
-    data_completamento: "",
-    stato_setup: "",
-    note_setup: "",
-    firma_pm: "",
-    firma_pm_data: "",
-    firma_cli: "",
-    firma_cli_data: "",
-  });
+let _idx = 0;
+const GRUPPI_CON_IDX = SETUP_GRUPPI.map(g => ({
+  ...g,
+  items: g.items.map(item => ({ label: item, key: `item_${_idx++}` })),
+}));
+const TOTAL_ITEMS = SETUP_GRUPPI.reduce((acc, g) => acc + g.items.length, 0);
 
-  const toggle = (key) => setChecked(prev => ({ ...prev, [key]: !prev[key] }));
-  const set = (k) => (v) => setData(prev => ({ ...prev, [k]: v }));
+export default function Form01H({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01H");
 
-  const totalItems = SETUP_GRUPPI.reduce((acc, g) => acc + g.items.length, 0);
+  const checked = d?.checked ?? {};
+  const toggle = (key) => updateField("checked", { ...checked, [key]: !checked[key] });
+
   const checkedCount = Object.values(checked).filter(Boolean).length;
-  const pct = Math.round((checkedCount / totalItems) * 100);
-
-  let idx = 0;
-  const gruppiConIdx = SETUP_GRUPPI.map(g => ({
-    ...g,
-    items: g.items.map(item => ({ label: item, key: `item_${idx++}` })),
-  }));
+  const pct = Math.round((checkedCount / TOTAL_ITEMS) * 100);
 
   return (
     <FormWrapper
@@ -94,38 +82,44 @@ export default function Form01H({ eng }) {
       title="Checklist Setup Operativo"
       subtitle="30 voci di setup in 5 aree · Repository · Comunicazione · Task · Accessi · Amministrazione"
       meta={{
-        Fase: "Fase 1.8",
-        Input: "Kick-off completato · Accessi cliente concordati",
-        Responsabile: "Project Manager ESG + IT",
-        Timing: "Entro 3 gg lav. dal kick-off",
-        Output: "Repository attivo · Canali operativi · Template condivisi",
+        "Fase": "Fase 1.8",
+        "Input": "Kick-off completato · Accessi cliente concordati",
+        "Resp.": "Project Manager ESG + IT",
+        "Timing": "Entro 3 gg lav. dal kick-off",
+        "Output": "Repository attivo · Canali operativi · Template condivisi",
       }}
       ruleBox={<><strong>Setup completo prima dell'avvio PROC-02 (Materialità).</strong> Entro 3 giorni lavorativi dal kick-off.</>}
-      storageKey={`form01h_${eng?.id}`}
+      ruleBoxType="info"
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={4}>
-        <Field label="Codice progetto"><Input value={data.codice_progetto} onChange={set("codice_progetto")} /></Field>
-        <Field label="Cliente"><Input value={data.cliente} onChange={set("cliente")} /></Field>
-        <Field label="PM responsabile"><Input value={data.pm} onChange={set("pm")} /></Field>
-        <Field label="Data completamento"><Input type="date" value={data.data_completamento} onChange={set("data_completamento")} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="PM responsabile"><Input value={d?.pm} onChange={v => updateField("pm", v)} /></Field>
+        <Field label="Data completamento"><Input type="date" value={d?.data_completamento} onChange={v => updateField("data_completamento", v)} /></Field>
       </FormSection>
 
       <FormSection title="Checklist attività di setup" cols={1}>
-        {/* Progress */}
         <div className="bg-muted/40 border border-border rounded-lg px-4 py-3 flex items-center gap-6 mb-4">
           <div>
-            <p className="text-2xl font-bold tabular-nums">{checkedCount} <span className="text-sm font-normal text-muted-foreground">/ {totalItems}</span></p>
+            <p className="text-2xl font-bold tabular-nums">{checkedCount} <span className="text-sm font-normal text-muted-foreground">/ {TOTAL_ITEMS}</span></p>
             <p className="text-xs text-muted-foreground mt-0.5">voci completate</p>
           </div>
           <div className="flex-1">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1"><span>Completamento setup</span><span className={cn(pct >= 95 ? "text-green-600" : pct >= 70 ? "text-amber-600" : "text-destructive")}>{pct}%</span></div>
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>Completamento setup</span>
+              <span className={cn(pct >= 95 ? "text-green-600" : pct >= 70 ? "text-amber-600" : "text-destructive")}>{pct}%</span>
+            </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div className={cn("h-full rounded-full transition-all", pct >= 95 ? "bg-green-500" : pct >= 70 ? "bg-amber-500" : "bg-destructive")} style={{ width: `${pct}%` }} />
             </div>
           </div>
         </div>
 
-        {gruppiConIdx.map(g => (
+        {GRUPPI_CON_IDX.map(g => (
           <div key={g.cat} className="mb-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 pb-1 border-b border-border">{g.cat}</p>
             <div className="space-y-1.5">
@@ -167,22 +161,24 @@ export default function Form01H({ eng }) {
       <FormSection title="Setup completato — Avvio Fase 2" cols={1}>
         <Field label="Stato setup">
           <RadioGroup
-            value={data.stato_setup}
-            onChange={set("stato_setup")}
+            value={d?.stato_setup}
+            onChange={v => updateField("stato_setup", v)}
             options={[
               { value: "completato", label: "✅ SETUP COMPLETATO — Tutti i punti verificati — Autorizzazione avvio PROC-02" },
               { value: "parziale", label: "⚠ SETUP PARZIALE — Punti mancanti documentati — Avvio condizionato" },
             ]}
           />
         </Field>
-        <Field label="Note / punti mancanti" span={2}><Textarea value={data.note_setup} onChange={set("note_setup")} rows={2} /></Field>
+        <Field label="Note / punti mancanti" span={2}>
+          <Textarea value={d?.note_setup} onChange={v => updateField("note_setup", v)} rows={2} />
+        </Field>
       </FormSection>
 
       <FormSection title="Firme" cols={4}>
-        <Field label="PM Consulenza"><Input value={data.firma_pm} onChange={set("firma_pm")} /></Field>
-        <Field label="Data firma PM"><Input type="date" value={data.firma_pm_data} onChange={set("firma_pm_data")} /></Field>
-        <Field label="Referente Cliente"><Input value={data.firma_cli} onChange={set("firma_cli")} /></Field>
-        <Field label="Data firma Cliente"><Input type="date" value={data.firma_cli_data} onChange={set("firma_cli_data")} /></Field>
+        <Field label="PM Consulenza"><Input value={d?.firma_pm} onChange={v => updateField("firma_pm", v)} /></Field>
+        <Field label="Data firma PM"><Input type="date" value={d?.firma_pm_data} onChange={v => updateField("firma_pm_data", v)} /></Field>
+        <Field label="Referente Cliente"><Input value={d?.firma_cli} onChange={v => updateField("firma_cli", v)} /></Field>
+        <Field label="Data firma Cliente"><Input type="date" value={d?.firma_cli_data} onChange={v => updateField("firma_cli_data", v)} /></Field>
       </FormSection>
     </FormWrapper>
   );

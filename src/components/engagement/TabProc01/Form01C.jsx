@@ -1,13 +1,7 @@
-import { useState } from "react";
 import FormWrapper, { FormSection } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Clock, Circle } from "lucide-react";
-
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const STORAGE_KEY = "esg_form_01C";
-const INITIAL = acmeFormData["01C"] ?? {};
 
 const STATI = {
   completata: { label: "Completata", cls: "bg-green-100 text-green-800 border-green-200", icon: CheckCircle2 },
@@ -27,9 +21,15 @@ const PROC_COLORS = {
   "PROC-07": "bg-indigo-100 text-indigo-800",
 };
 
-export default function Form01C() {
-  const [milestone, setMilestone] = useState(INITIAL.milestone || []);
-  const setMs = (i, k, v) => setMilestone(p => { const n = [...p]; n[i] = { ...n[i], [k]: v }; return n; });
+export default function Form01C({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01C");
+
+  const milestone = d?.milestone ?? [];
+  const setMs = (i, k, v) => {
+    const n = [...milestone];
+    n[i] = { ...n[i], [k]: v };
+    updateField("milestone", n);
+  };
 
   const completate = milestone.filter(m => m.stato === "completata").length;
   const inCorso = milestone.filter(m => m.stato === "in_corso").length;
@@ -42,10 +42,11 @@ export default function Form01C() {
       meta={{ "Fase": "PROC-01.3", "Resp.": "Project Manager", "Output": "Baseline Gantt approvata" }}
       ruleBox="📅 Aggiornare date effettive ad ogni milestone raggiunta. Le milestone in ritardo >7 giorni richiedono notifica al partner."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* KPI */}
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Totale", value: milestone.length, color: "text-foreground" },
@@ -77,30 +78,29 @@ export default function Form01C() {
             <tbody>
               {milestone.map((m, i) => {
                 const cfg = STATI[m.stato] || STATI.non_iniziata;
-                const Icon = cfg.icon;
                 const isLate = m.stato !== "completata" && m.data_target && new Date(m.data_target) < new Date();
                 return (
                   <tr key={m.id} className={cn("border-t border-border hover:bg-muted/20", isLate && "bg-red-50/40")}>
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{m.id}</td>
                     <td className="px-3 py-2">
-                      <select value={m.proc} onChange={e => setMs(i, "proc", e.target.value)} className={cn("text-xs font-medium px-2 py-0.5 rounded border border-border", PROC_COLORS[m.proc])}>
+                      <select value={m.proc || ""} onChange={e => setMs(i, "proc", e.target.value)} className={cn("text-xs font-medium px-2 py-0.5 rounded border border-border", PROC_COLORS[m.proc])}>
                         {PROCS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </td>
                     <td className="px-3 py-2 font-medium">{m.nome}</td>
                     <td className="px-3 py-2 text-center">
-                      <input type="date" value={m.data_target} onChange={e => setMs(i, "data_target", e.target.value)} className={cn("border border-border rounded px-2 py-0.5 text-xs bg-background", isLate && "border-red-400")} />
+                      <input type="date" value={m.data_target || ""} onChange={e => setMs(i, "data_target", e.target.value)} className={cn("border border-border rounded px-2 py-0.5 text-xs bg-background", isLate && "border-red-400")} />
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <input type="date" value={m.data_effettiva} onChange={e => setMs(i, "data_effettiva", e.target.value)} className="border border-border rounded px-2 py-0.5 text-xs bg-background" />
+                      <input type="date" value={m.data_effettiva || ""} onChange={e => setMs(i, "data_effettiva", e.target.value)} className="border border-border rounded px-2 py-0.5 text-xs bg-background" />
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <select value={m.stato} onChange={e => setMs(i, "stato", e.target.value)} className={cn("text-xs font-medium px-2 py-0.5 rounded border", cfg.cls)}>
+                      <select value={m.stato || "non_iniziata"} onChange={e => setMs(i, "stato", e.target.value)} className={cn("text-xs font-medium px-2 py-0.5 rounded border", cfg.cls)}>
                         {Object.entries(STATI).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
                     </td>
                     <td className="px-3 py-2">
-                      <input value={m.resp} onChange={e => setMs(i, "resp", e.target.value)} className="w-24 border border-border rounded px-2 py-0.5 text-xs bg-background" />
+                      <input value={m.resp || ""} onChange={e => setMs(i, "resp", e.target.value)} className="w-24 border border-border rounded px-2 py-0.5 text-xs bg-background" />
                     </td>
                   </tr>
                 );
@@ -110,7 +110,6 @@ export default function Form01C() {
         </div>
       </FormSection>
 
-      {/* GANTT VISIVO SEMPLIFICATO */}
       <FormSection title="Cronoprogramma visivo" cols={1}>
         <div className="space-y-1.5">
           {milestone.map(m => {

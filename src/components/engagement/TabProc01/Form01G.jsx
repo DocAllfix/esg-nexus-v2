@@ -1,22 +1,20 @@
-import { useState } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
+export default function Form01G({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01G");
 
-const STORAGE_KEY = "esg_form_01G";
-const INITIAL = acmeFormData["01G"] ?? {};
-
-export default function Form01G() {
-  const [d, setD] = useState(INITIAL);
-  const [checklist, setChecklist] = useState(INITIAL.checklist || []);
-  const set = (k, v) => setD(p => ({ ...p, [k]: v }));
-  const toggle = (i) => setChecklist(p => { const n = [...p]; n[i] = { ...n[i], fatto: !n[i].fatto }; return n; });
+  const checklist = d?.checklist ?? [];
+  const toggle = (i) => {
+    const n = [...checklist];
+    n[i] = { ...n[i], fatto: !n[i].fatto };
+    updateField("checklist", n);
+  };
 
   const fatte = checklist.filter(c => c.fatto).length;
-  const tutteOk = fatte === checklist.length;
+  const tutteOk = checklist.length > 0 && fatte === checklist.length;
 
   return (
     <FormWrapper
@@ -26,17 +24,18 @@ export default function Form01G() {
       meta={{ "Fase": "Finale PROC-01", "Resp.": "Partner + Project Manager", "Output": "Avvio PROC-02 autorizzato" }}
       ruleBox="✅ Prima di passare a PROC-02, tutte le voci della checklist devono essere spuntate. In caso contrario, bloccare la transizione e completare le attività mancanti."
       ruleBoxType={tutteOk ? "success" : "warning"}
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* PROGRESS */}
       <div className={cn("rounded-xl border-2 p-6 text-center", tutteOk ? "border-green-400 bg-green-50" : "border-amber-300 bg-amber-50")}>
         <p className={cn("text-4xl font-bold", tutteOk ? "text-green-700" : "text-amber-700")}>{fatte}/{checklist.length}</p>
         <p className={cn("text-sm font-medium mt-1", tutteOk ? "text-green-700" : "text-amber-700")}>
           {tutteOk ? "✅ PROC-01 COMPLETATO — Transizione a PROC-02 autorizzata" : "⏸ Completare le voci mancanti prima di procedere"}
         </p>
         <div className="w-full h-2 bg-white rounded-full mt-3">
-          <div className={cn("h-full rounded-full transition-all", tutteOk ? "bg-green-500" : "bg-amber-400")} style={{ width: `${(fatte / checklist.length) * 100}%` }} />
+          <div className={cn("h-full rounded-full transition-all", tutteOk ? "bg-green-500" : "bg-amber-400")} style={{ width: checklist.length > 0 ? `${(fatte / checklist.length) * 100}%` : "0%" }} />
         </div>
       </div>
 
@@ -63,13 +62,13 @@ export default function Form01G() {
 
       <FormSection title="Chiusura formale">
         <Field label="Data chiusura PROC-01" required>
-          <Input type="date" value={d.data_chiusura_proc01} onChange={v => set("data_chiusura_proc01", v)} />
+          <Input type="date" value={d?.data_chiusura_proc01} onChange={v => updateField("data_chiusura_proc01", v)} />
         </Field>
         <Field label="Approvato da">
-          <Input value={d.approvato_da} onChange={v => set("approvato_da", v)} />
+          <Input value={d?.approvato_da} onChange={v => updateField("approvato_da", v)} />
         </Field>
         <Field label="Note di transizione a PROC-02" span={2}>
-          <Textarea value={d.note_transizione} onChange={v => set("note_transizione", v)} rows={3} />
+          <Textarea value={d?.note_transizione} onChange={v => updateField("note_transizione", v)} rows={3} />
         </Field>
       </FormSection>
     </FormWrapper>

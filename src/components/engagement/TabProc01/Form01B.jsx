@@ -1,24 +1,30 @@
-import { useState } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea, Select } from "@/components/common/FormWrapper";
-import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
+import { useFormData } from "@/hooks/useFormData";
+import { CheckCircle2, Circle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
+export default function Form01B({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01B");
 
-const STORAGE_KEY = "esg_form_01B";
-const INITIAL = acmeFormData["01B"] ?? {};
+  const presentiCliente = d?.presenti_cliente ?? [];
+  const presentiStudio = d?.presenti_studio ?? [];
+  const agenda = d?.agenda_punti ?? [];
+  const actions = d?.action_items ?? [];
 
-export default function Form01B() {
-  const [d, setD] = useState(INITIAL);
-  const [presentiCliente, setPresentiCliente] = useState(INITIAL.presenti_cliente || []);
-  const [presentiStudio, setPresentiStudio] = useState(INITIAL.presenti_studio || []);
-  const [agenda, setAgenda] = useState(INITIAL.agenda_punti || []);
-  const [actions, setActions] = useState(INITIAL.action_items || []);
-  const set = (k, v) => setD(p => ({ ...p, [k]: v }));
+  const setPresentiCliente = (n) => updateField("presenti_cliente", n);
+  const setAgenda = (n) => updateField("agenda_punti", n);
+  const setActions = (n) => updateField("action_items", n);
 
-  const toggleAgenda = (i) => setAgenda(p => { const n = [...p]; n[i] = { ...n[i], completato: !n[i].completato }; return n; });
-  const toggleAction = (i) => setActions(p => { const n = [...p]; n[i] = { ...n[i], stato: n[i].stato === "fatto" ? "aperto" : "fatto" }; return n; });
+  const toggleAgenda = (i) => {
+    const n = [...agenda];
+    n[i] = { ...n[i], completato: !n[i].completato };
+    setAgenda(n);
+  };
+  const toggleAction = (i) => {
+    const n = [...actions];
+    n[i] = { ...n[i], stato: n[i].stato === "fatto" ? "aperto" : "fatto" };
+    setActions(n);
+  };
 
   return (
     <FormWrapper
@@ -28,28 +34,29 @@ export default function Form01B() {
       meta={{ "Fase": "PROC-01.2", "Resp.": "Project Manager", "Input": "Contratto validato (01A)", "Output": "Verbale firmato da entrambe le parti" }}
       ruleBox="📋 Compilare durante o immediatamente dopo il kick-off. Inviare verbale firmato entro 48h dal meeting."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <FormSection title="Dettagli riunione">
         <Field label="Data kick-off" required>
-          <Input type="date" value={d.data_kickoff} onChange={v => set("data_kickoff", v)} />
+          <Input type="date" value={d?.data_kickoff} onChange={v => updateField("data_kickoff", v)} />
         </Field>
         <Field label="Ora">
-          <Input type="time" value={d.ora_kickoff} onChange={v => set("ora_kickoff", v)} />
+          <Input type="time" value={d?.ora_kickoff} onChange={v => updateField("ora_kickoff", v)} />
         </Field>
         <Field label="Luogo">
-          <Input value={d.luogo} onChange={v => set("luogo", v)} />
+          <Input value={d?.luogo} onChange={v => updateField("luogo", v)} />
         </Field>
         <Field label="Modalità">
-          <Select value={d.modalita} onChange={v => set("modalita", v)} options={["Presenza", "Videoconferenza", "Ibrido"]} />
+          <Select value={d?.modalita} onChange={v => updateField("modalita", v)} options={["Presenza", "Videoconferenza", "Ibrido"]} />
         </Field>
         <Field label="Durata (ore)">
-          <Input type="number" value={d.durata_ore} onChange={v => set("durata_ore", v)} />
+          <Input type="number" value={d?.durata_ore} onChange={v => updateField("durata_ore", v)} />
         </Field>
       </FormSection>
 
-      {/* PARTECIPANTI CLIENTE */}
       <FormSection title="Partecipanti — Cliente" cols={1}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
@@ -63,20 +70,19 @@ export default function Form01B() {
             <tbody>
               {presentiCliente.map((p, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background" value={p.nome} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], nome: e.target.value }; setPresentiCliente(n); }} /></td>
-                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background" value={p.ruolo} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], ruolo: e.target.value }; setPresentiCliente(n); }} /></td>
-                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background font-mono" value={p.email} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], email: e.target.value }; setPresentiCliente(n); }} /></td>
+                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background" value={p.nome || ""} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], nome: e.target.value }; setPresentiCliente(n); }} /></td>
+                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background" value={p.ruolo || ""} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], ruolo: e.target.value }; setPresentiCliente(n); }} /></td>
+                  <td className="px-3 py-2"><input className="w-full border border-border rounded px-2 py-1 text-xs bg-background font-mono" value={p.email || ""} onChange={e => { const n = [...presentiCliente]; n[i] = { ...n[i], email: e.target.value }; setPresentiCliente(n); }} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <button onClick={() => setPresentiCliente(p => [...p, { nome: "", ruolo: "", email: "" }])} className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline">
+          <button onClick={() => setPresentiCliente([...presentiCliente, { nome: "", ruolo: "", email: "" }])} className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline">
             <Plus size={12} /> Aggiungi partecipante
           </button>
         </div>
       </FormSection>
 
-      {/* AGENDA */}
       <FormSection title="Agenda" cols={1}>
         <div className="space-y-2">
           {agenda.map((item, i) => (
@@ -93,14 +99,12 @@ export default function Form01B() {
         </div>
       </FormSection>
 
-      {/* DECISIONI */}
       <FormSection title="Decisioni prese" cols={1}>
         <Field label="Sintesi decisioni e accordi">
-          <Textarea value={d.decisioni} onChange={v => set("decisioni", v)} rows={4} />
+          <Textarea value={d?.decisioni} onChange={v => updateField("decisioni", v)} rows={4} />
         </Field>
       </FormSection>
 
-      {/* ACTION ITEMS */}
       <FormSection title="Action items" cols={1}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
@@ -125,13 +129,13 @@ export default function Form01B() {
                     </button>
                   </td>
                   <td className="px-3 py-2">
-                    <input value={a.azione} onChange={e => { const n = [...actions]; n[i] = { ...n[i], azione: e.target.value }; setActions(n); }} className="w-full border border-border rounded px-2 py-1 text-xs bg-background" />
+                    <input value={a.azione || ""} onChange={e => { const n = [...actions]; n[i] = { ...n[i], azione: e.target.value }; setActions(n); }} className="w-full border border-border rounded px-2 py-1 text-xs bg-background" />
                   </td>
                   <td className="px-3 py-2">
-                    <input value={a.responsabile} onChange={e => { const n = [...actions]; n[i] = { ...n[i], responsabile: e.target.value }; setActions(n); }} className="w-36 border border-border rounded px-2 py-1 text-xs bg-background" />
+                    <input value={a.responsabile || ""} onChange={e => { const n = [...actions]; n[i] = { ...n[i], responsabile: e.target.value }; setActions(n); }} className="w-36 border border-border rounded px-2 py-1 text-xs bg-background" />
                   </td>
                   <td className="px-3 py-2">
-                    <input type="date" value={a.scadenza} onChange={e => { const n = [...actions]; n[i] = { ...n[i], scadenza: e.target.value }; setActions(n); }} className="border border-border rounded px-2 py-1 text-xs bg-background" />
+                    <input type="date" value={a.scadenza || ""} onChange={e => { const n = [...actions]; n[i] = { ...n[i], scadenza: e.target.value }; setActions(n); }} className="border border-border rounded px-2 py-1 text-xs bg-background" />
                   </td>
                   <td className="px-3 py-2">
                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium border", a.stato === "fatto" ? "bg-green-100 text-green-800 border-green-200" : "bg-amber-100 text-amber-800 border-amber-200")}>
@@ -142,7 +146,7 @@ export default function Form01B() {
               ))}
             </tbody>
           </table>
-          <button onClick={() => setActions(p => [...p, { azione: "", responsabile: "", scadenza: "", stato: "aperto" }])} className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline">
+          <button onClick={() => setActions([...actions, { azione: "", responsabile: "", scadenza: "", stato: "aperto" }])} className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline">
             <Plus size={12} /> Aggiungi action item
           </button>
         </div>
@@ -150,7 +154,7 @@ export default function Form01B() {
 
       <FormSection title="Note" cols={1}>
         <Field label="Note aggiuntive e osservazioni">
-          <Textarea value={d.note} onChange={v => set("note", v)} rows={2} />
+          <Textarea value={d?.note} onChange={v => updateField("note", v)} rows={2} />
         </Field>
       </FormSection>
     </FormWrapper>

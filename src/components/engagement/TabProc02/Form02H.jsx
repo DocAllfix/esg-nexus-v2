@@ -1,7 +1,6 @@
 import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
-import { useState } from "react";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const SOGLIA_IMP = 3.0;
 const SOGLIA_FIN = 9.0;
@@ -33,32 +32,14 @@ const TEMI = [
   { cat: "GOVERNANCE (G)", id: "G4",   label: "Fiscalità responsabile" },
 ];
 
-export default function Form02H({ eng }) {
-  // Temi con score manuale (importati da 02G; qui li si può immettere manualmente)
-  const [scoreImp, setScoreImp] = useState(() => Object.fromEntries(TEMI.map(t => [t.id, ""])));
-  const [scoreFin, setScoreFin] = useState(() => Object.fromEntries(TEMI.map(t => [t.id, ""])));
-  const [motivazioni, setMotivazioni] = useState(() => Object.fromEntries(TEMI.map(t => [t.id, ""])));
-  const [esrs, setEsrs] = useState(() => Object.fromEntries(TEMI.map(t => [t.id, ""])));
+export default function Form02H({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02H");
 
-  const [data, setData] = useState({
-    codice_progetto: eng?.project_code || "",
-    cliente: eng?.cliente_nome || "",
-    versione: "bozza",
-    data_emissione: "",
-    nota_metodologica: "",
-    approvazione: "",
-    modifiche: "",
-    firma_pm: "",
-    firma_pm_data: "",
-    firma_cli: "",
-    firma_cli_data: "",
-    firma_cs: "",
-    firma_cda: "",
-  });
+  const scoreImp = d?.score_imp ?? {};
+  const scoreFin = d?.score_fin ?? {};
+  const motivazioni = d?.motivazioni ?? {};
+  const esrs = d?.esrs ?? {};
 
-  const set = (k) => (v) => setData(prev => ({ ...prev, [k]: v }));
-
-  // Calcola materialità e ranking
   const temiCalc = TEMI.map(t => {
     const si = parseFloat(scoreImp[t.id]);
     const sf = parseFloat(scoreFin[t.id]);
@@ -82,53 +63,51 @@ export default function Form02H({ eng }) {
   const media = materiali.slice(5);
   const nonMateriali = temiCalc.filter(t => t.evaluated && !t.materiale);
 
-  function RankRow({ t, rank }) {
-    const tipoColor = t.tipo === "Doppia" ? "bg-green-500/10 text-green-700 dark:text-green-400" :
-      t.tipo === "Solo impatto" ? "bg-teal-500/10 text-teal-700 dark:text-teal-400" :
-      t.tipo === "Solo finanziaria" ? "bg-blue-500/10 text-blue-700 dark:text-blue-400" :
-      "bg-muted text-muted-foreground";
-
-    return (
-      <tr className="hover:bg-muted/20">
-        <td className="px-3 py-2.5 text-center">
-          <span className="w-7 h-7 rounded-full bg-primary/10 text-primary text-[11px] font-bold inline-flex items-center justify-center">{rank}</span>
-        </td>
-        <td className="px-3 py-2.5">
-          <p className="font-semibold text-xs text-foreground">{t.label}</p>
-          <p className="text-[10px] text-muted-foreground">{t.id} · {t.cat}</p>
-        </td>
-        <td className={cn("px-3 py-2.5 text-center font-bold text-xs tabular-nums", t.matImp ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>
-          {t.si !== null ? t.si.toFixed(2) : "—"}
-        </td>
-        <td className={cn("px-3 py-2.5 text-center font-bold text-xs tabular-nums", t.matFin ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>
-          {t.sf !== null ? t.sf.toFixed(2) : "—"}
-        </td>
-        <td className="px-3 py-2.5 text-center">
-          <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border border-transparent", tipoColor)}>{t.tipo}</span>
-        </td>
-        <td className="px-2 py-2.5">
-          <input type="text" value={esrs[t.id]} onChange={e => setEsrs(prev => ({ ...prev, [t.id]: e.target.value }))}
-            className="w-full border border-border rounded px-1.5 py-0.5 text-[10px] bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            placeholder="ESRS" />
-        </td>
-        <td className="px-3 py-2.5">
-          <input type="text" value={motivazioni[t.id]} onChange={e => setMotivazioni(prev => ({ ...prev, [t.id]: e.target.value }))}
-            className="w-full border border-border rounded px-1.5 py-0.5 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            placeholder="Perché materiale" />
-        </td>
-      </tr>
-    );
-  }
+  const tipoColor = (tipo) => tipo === "Doppia" ? "bg-green-500/10 text-green-700" :
+    tipo === "Solo impatto" ? "bg-teal-500/10 text-teal-700" :
+    tipo === "Solo finanziaria" ? "bg-blue-500/10 text-blue-700" :
+    "bg-muted text-muted-foreground";
 
   const tableHeader = (
     <tr className="border-b border-border bg-muted/30">
-      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase tracking-widest w-12">Rank</th>
-      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase tracking-widest min-w-[180px]">Tema materiale</th>
-      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase tracking-widest w-16">Score Imp.</th>
-      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase tracking-widest w-16">Score Fin.</th>
-      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase tracking-widest w-24">Tipo mat.</th>
-      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase tracking-widest w-20">ESRS</th>
-      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase tracking-widest min-w-[180px]">Motivazione</th>
+      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase w-12">Rank</th>
+      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase min-w-[180px]">Tema materiale</th>
+      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase w-16">Score Imp.</th>
+      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase w-16">Score Fin.</th>
+      <th className="px-3 py-2.5 text-center font-semibold text-muted-foreground text-[10px] uppercase w-24">Tipo mat.</th>
+      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase w-20">ESRS</th>
+      <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[10px] uppercase min-w-[180px]">Motivazione</th>
+    </tr>
+  );
+
+  const RankRow = ({ t, rank }) => (
+    <tr className="hover:bg-muted/20">
+      <td className="px-3 py-2.5 text-center">
+        <span className="w-7 h-7 rounded-full bg-primary/10 text-primary text-[11px] font-bold inline-flex items-center justify-center">{rank}</span>
+      </td>
+      <td className="px-3 py-2.5">
+        <p className="font-semibold text-xs text-foreground">{t.label}</p>
+        <p className="text-[10px] text-muted-foreground">{t.id} · {t.cat}</p>
+      </td>
+      <td className={cn("px-3 py-2.5 text-center font-bold text-xs tabular-nums", t.matImp ? "text-green-700" : "text-muted-foreground")}>
+        {t.si !== null ? t.si.toFixed(2) : "—"}
+      </td>
+      <td className={cn("px-3 py-2.5 text-center font-bold text-xs tabular-nums", t.matFin ? "text-green-700" : "text-muted-foreground")}>
+        {t.sf !== null ? t.sf.toFixed(2) : "—"}
+      </td>
+      <td className="px-3 py-2.5 text-center">
+        <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border border-transparent", tipoColor(t.tipo))}>{t.tipo}</span>
+      </td>
+      <td className="px-2 py-2.5">
+        <input type="text" value={esrs[t.id] || ""} onChange={e => updateField("esrs", { ...esrs, [t.id]: e.target.value })}
+          className="w-full border border-border rounded px-1.5 py-0.5 text-[10px] bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          placeholder="ESRS" />
+      </td>
+      <td className="px-3 py-2.5">
+        <input type="text" value={motivazioni[t.id] || ""} onChange={e => updateField("motivazioni", { ...motivazioni, [t.id]: e.target.value })}
+          className="w-full border border-border rounded px-1.5 py-0.5 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          placeholder="Perché materiale" />
+      </td>
     </tr>
   );
 
@@ -138,41 +117,41 @@ export default function Form02H({ eng }) {
       title="Matrice di Materialità — Output Finale"
       subtitle="Top priority / Media / Non materiali · ESRS applicabili · Nota metodologica"
       meta={{
-        Fase: "Fase 2.7",
-        Input: "FORM-02G (scoring aggregato) · Lista IRO materiali",
-        Responsabile: "CS ESG + PM",
-        Timing: "Settimane 6-7",
-        Output: "Matrice definitiva · Lista temi materiali · Tavola ESRS",
+        "Fase": "Fase 2.7",
+        "Input": "FORM-02G (scoring aggregato) · Lista IRO materiali",
+        "Resp.": "CS ESG + PM",
+        "Timing": "Settimane 6-7",
+        "Output": "Matrice definitiva · Lista temi materiali · Tavola ESRS",
       }}
       ruleBox={<><strong>Output finale PROC-02:</strong> lista temi materiali ordinata per score aggregato. Soglie: Impatto ≥ {SOGLIA_IMP} · Finanziario ≥ {SOGLIA_FIN}. Richiede approvazione formale del CdA.</>}
-      storageKey={`form02h_${eng?.id}`}
+      ruleBoxType="info"
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={4}>
-        <Field label="Codice progetto"><Input value={data.codice_progetto} onChange={set("codice_progetto")} /></Field>
-        <Field label="Cliente"><Input value={data.cliente} onChange={set("cliente")} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Versione">
-          <Select value={data.versione} onChange={set("versione")} options={[
+          <Select value={d?.versione} onChange={v => updateField("versione", v)} options={[
             { value: "bozza", label: "Bozza" },
             { value: "workshop", label: "Condivisa in workshop" },
             { value: "finale", label: "✓ Finale approvata" },
           ]} />
         </Field>
-        <Field label="Data emissione"><Input type="date" value={data.data_emissione} onChange={set("data_emissione")} /></Field>
+        <Field label="Data emissione"><Input type="date" value={d?.data_emissione} onChange={v => updateField("data_emissione", v)} /></Field>
       </FormSection>
 
-      {/* Score input (importo da 02G o manuale) */}
-      <FormSection title="Score per tema (importare da FORM-02G o compilare manualmente)" cols={1}>
-        <div className="bg-muted/20 border border-border/60 rounded-lg px-3 py-2 text-xs text-muted-foreground mb-3">
-          Inserire i punteggi finali aggregati per ogni tema (dalla FORM-02G). La matrice si aggiorna automaticamente.
-        </div>
+      <FormSection title="Score per tema (compilare manualmente o importare da FORM-02G)" cols={1}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="px-3 py-2 text-left text-muted-foreground font-semibold uppercase tracking-widest text-[10px] min-w-[200px]">Tema</th>
-                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase tracking-widest text-[10px] w-24">Score Imp. (0-5)</th>
-                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase tracking-widest text-[10px] w-24">Score Fin. (0-25)</th>
-                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase tracking-widest text-[10px] w-20">Materiale?</th>
+                <th className="px-3 py-2 text-left text-muted-foreground font-semibold uppercase text-[10px] min-w-[200px]">Tema</th>
+                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase text-[10px] w-24">Score Imp. (0-5)</th>
+                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase text-[10px] w-24">Score Fin. (0-25)</th>
+                <th className="px-3 py-2 text-center text-muted-foreground font-semibold uppercase text-[10px] w-20">Materiale?</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -186,15 +165,15 @@ export default function Form02H({ eng }) {
                   <tr key={t.id} className="hover:bg-muted/20">
                     <td className="px-3 py-2 font-medium text-foreground">{t.label} <span className="text-muted-foreground text-[10px]">({t.id})</span></td>
                     <td className="px-3 py-2 text-center">
-                      <input type="number" step="0.1" min="0" max="5" value={scoreImp[t.id]}
-                        onChange={e => setScoreImp(prev => ({ ...prev, [t.id]: e.target.value }))}
+                      <input type="number" step="0.1" min="0" max="5" value={scoreImp[t.id] || ""}
+                        onChange={e => updateField("score_imp", { ...scoreImp, [t.id]: e.target.value })}
                         className={cn("w-16 border rounded px-1.5 py-0.5 text-center text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring",
                           matImp ? "border-green-500/30 bg-green-500/5" : "border-border"
                         )} placeholder="0.00" />
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <input type="number" step="0.1" min="0" max="25" value={scoreFin[t.id]}
-                        onChange={e => setScoreFin(prev => ({ ...prev, [t.id]: e.target.value }))}
+                      <input type="number" step="0.1" min="0" max="25" value={scoreFin[t.id] || ""}
+                        onChange={e => updateField("score_fin", { ...scoreFin, [t.id]: e.target.value })}
                         className={cn("w-16 border rounded px-1.5 py-0.5 text-center text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring",
                           matFin ? "border-green-500/30 bg-green-500/5" : "border-border"
                         )} placeholder="0.00" />
@@ -202,7 +181,7 @@ export default function Form02H({ eng }) {
                     <td className="px-3 py-2 text-center">
                       {(!isNaN(si) || !isNaN(sf)) ? (
                         <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                          isMat ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30" : "bg-muted text-muted-foreground border-border"
+                          isMat ? "bg-green-500/10 text-green-700 border-green-500/30" : "bg-muted text-muted-foreground border-border"
                         )}>
                           {isMat ? "SÌ" : "no"}
                         </span>
@@ -216,13 +195,12 @@ export default function Form02H({ eng }) {
         </div>
       </FormSection>
 
-      {/* Top 5 */}
       <FormSection title="🔴 Temi ad alta materialità — Top 5" cols={1}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>{tableHeader}</thead>
             <tbody className="divide-y divide-border">
-              {top5.length > 0 ? top5.map((t, i) => <RankRow key={t.id} t={t} rank={i+1} />) : (
+              {top5.length > 0 ? top5.map((t, i) => <RankRow key={t.id} t={t} rank={i + 1} />) : (
                 <tr><td colSpan={7} className="text-center py-6 text-xs text-muted-foreground italic">Nessun tema elaborato — compilare gli score sopra</td></tr>
               )}
             </tbody>
@@ -230,28 +208,26 @@ export default function Form02H({ eng }) {
         </div>
       </FormSection>
 
-      {/* Media */}
       {media.length > 0 && (
         <FormSection title="🟡 Temi a media materialità" cols={1}>
           <div className="overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>{tableHeader}</thead>
               <tbody className="divide-y divide-border">
-                {media.map((t, i) => <RankRow key={t.id} t={t} rank={i+6} />)}
+                {media.map((t, i) => <RankRow key={t.id} t={t} rank={i + 6} />)}
               </tbody>
             </table>
           </div>
         </FormSection>
       )}
 
-      {/* Non materiali */}
       {nonMateriali.length > 0 && (
         <FormSection title="⚪ Temi non materiali (monitorati)" cols={1}>
           <div className="overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>{tableHeader}</thead>
               <tbody className="divide-y divide-border">
-                {nonMateriali.map((t, i) => <RankRow key={t.id} t={t} rank="n.m." />)}
+                {nonMateriali.map((t) => <RankRow key={t.id} t={t} rank="n.m." />)}
               </tbody>
             </table>
           </div>
@@ -259,34 +235,33 @@ export default function Form02H({ eng }) {
       )}
 
       <FormSection title="Nota metodologica (da includere nel Bilancio di Sostenibilità)" cols={1}>
-        <div className="bg-blue-500/8 border border-blue-500/30 text-blue-700 dark:text-blue-300 rounded-lg px-3 py-2 text-xs mb-3">
-          Nota da includere nel Bilancio. Descrive il processo di analisi: periodo, metodo, stakeholder coinvolti, soglie, risultati.
-        </div>
         <Field label="Nota metodologica">
-          <Textarea value={data.nota_metodologica} onChange={set("nota_metodologica")} rows={8}
-            placeholder={`[ORGANIZZAZIONE] ha condotto la propria analisi di materialità secondo il principio della Doppia Materialità (Direttiva UE 2022/2464 CSRD, ESRS 1). Il processo si è svolto nel periodo [...] e ha coinvolto [...] stakeholder interni e [...] stakeholder esterni attraverso survey digitali, interviste e workshop dedicati...`}
+          <Textarea value={d?.nota_metodologica} onChange={v => updateField("nota_metodologica", v)} rows={8}
+            placeholder={`[ORGANIZZAZIONE] ha condotto la propria analisi di materialità secondo il principio della Doppia Materialità (Direttiva UE 2022/2464 CSRD, ESRS 1)...`}
           />
         </Field>
       </FormSection>
 
       <FormSection title="Approvazione formale" cols={1}>
         <Field label="Decisione">
-          <RadioGroup value={data.approvazione} onChange={set("approvazione")} options={[
+          <RadioGroup value={d?.approvazione} onChange={v => updateField("approvazione", v)} options={[
             { value: "approvata", label: "✅ Approvata — Autorizzazione avvio PROC-03 (Gap Analysis) e PROC-04 (Raccolta Dati)" },
             { value: "modifiche", label: "⚠ Approvata con modifiche — dettaglio sotto" },
             { value: "respinta", label: "🛑 Respinta — ricondurre a FORM-02G con rettifiche" },
           ]} />
         </Field>
-        <Field label="Dettaglio modifiche richieste" span={2}><Textarea value={data.modifiche} onChange={set("modifiche")} rows={2} /></Field>
+        <Field label="Dettaglio modifiche richieste" span={2}>
+          <Textarea value={d?.modifiche} onChange={v => updateField("modifiche", v)} rows={2} />
+        </Field>
       </FormSection>
 
       <FormSection title="Firme" cols={3}>
-        <Field label="PM Consulenza"><Input value={data.firma_pm} onChange={set("firma_pm")} /></Field>
-        <Field label="Data firma PM"><Input type="date" value={data.firma_pm_data} onChange={set("firma_pm_data")} /></Field>
-        <Field label="Referente Cliente"><Input value={data.firma_cli} onChange={set("firma_cli")} /></Field>
-        <Field label="Data firma Cliente"><Input type="date" value={data.firma_cli_data} onChange={set("firma_cli_data")} /></Field>
-        <Field label="CS ESG"><Input value={data.firma_cs} onChange={set("firma_cs")} /></Field>
-        <Field label="CdA / Management (se richiesto)"><Input value={data.firma_cda} onChange={set("firma_cda")} /></Field>
+        <Field label="PM Consulenza"><Input value={d?.firma_pm} onChange={v => updateField("firma_pm", v)} /></Field>
+        <Field label="Data firma PM"><Input type="date" value={d?.firma_pm_data} onChange={v => updateField("firma_pm_data", v)} /></Field>
+        <Field label="Referente Cliente"><Input value={d?.firma_cli} onChange={v => updateField("firma_cli", v)} /></Field>
+        <Field label="Data firma Cliente"><Input type="date" value={d?.firma_cli_data} onChange={v => updateField("firma_cli_data", v)} /></Field>
+        <Field label="CS ESG"><Input value={d?.firma_cs} onChange={v => updateField("firma_cs", v)} /></Field>
+        <Field label="CdA / Management (se richiesto)"><Input value={d?.firma_cda} onChange={v => updateField("firma_cda", v)} /></Field>
       </FormSection>
     </FormWrapper>
   );

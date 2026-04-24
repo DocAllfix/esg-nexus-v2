@@ -1,12 +1,6 @@
-import { useState } from "react";
 import FormWrapper, { FormSection } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const STORAGE_KEY = "esg_form_01D";
-const INITIAL = acmeFormData["01D"] ?? {};
 
 const RUOLI_COLS = [
   { key: "fabbricini", label: "Fabbricini", sub: "Partner" },
@@ -27,18 +21,24 @@ const RACI_COLORS = {
   "": "bg-transparent text-transparent",
 };
 
-export default function Form01D() {
-  const [attivita, setAttivita] = useState(INITIAL.attivita || []);
-  const setRaci = (i, col, v) => setAttivita(p => { const n = [...p]; n[i] = { ...n[i], [col]: v }; return n; });
+const PROCS_COLORS = {
+  "PROC-01": "bg-blue-50 text-blue-700",
+  "PROC-02": "bg-purple-50 text-purple-700",
+  "PROC-03": "bg-amber-50 text-amber-700",
+  "PROC-04": "bg-orange-50 text-orange-700",
+  "PROC-05": "bg-teal-50 text-teal-700",
+  "PROC-06": "bg-green-50 text-green-700",
+  "PROC-07": "bg-indigo-50 text-indigo-700",
+};
 
-  const PROCS_COLORS = {
-    "PROC-01": "bg-blue-50 text-blue-700",
-    "PROC-02": "bg-purple-50 text-purple-700",
-    "PROC-03": "bg-amber-50 text-amber-700",
-    "PROC-04": "bg-orange-50 text-orange-700",
-    "PROC-05": "bg-teal-50 text-teal-700",
-    "PROC-06": "bg-green-50 text-green-700",
-    "PROC-07": "bg-indigo-50 text-indigo-700",
+export default function Form01D({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01D");
+
+  const attivita = d?.attivita ?? [];
+  const setRaci = (i, col, v) => {
+    const n = [...attivita];
+    n[i] = { ...n[i], [col]: v };
+    updateField("attivita", n);
   };
 
   return (
@@ -49,10 +49,11 @@ export default function Form01D() {
       meta={{ "Fase": "PROC-01.4", "Resp.": "Project Manager", "Output": "RACI condiviso e firmato" }}
       ruleBox="🎯 R = Responsible (esegue) · A = Accountable (risponde) · C = Consulted (consultato) · I = Informed (informato). Ogni riga deve avere esattamente 1 A e almeno 1 R."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
-      {/* LEGENDA */}
       <div className="flex flex-wrap gap-3">
         {[["R", "Responsible — chi esegue"], ["A", "Accountable — chi risponde"], ["C", "Consulted — chi viene consultato"], ["I", "Informed — chi viene informato"]].map(([k, v]) => (
           <div key={k} className="flex items-center gap-2">
@@ -107,7 +108,6 @@ export default function Form01D() {
         </div>
       </FormSection>
 
-      {/* STATISTICHE */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {RUOLI_COLS.map(col => {
           const rCount = attivita.filter(a => a[col.key] === "R").length;

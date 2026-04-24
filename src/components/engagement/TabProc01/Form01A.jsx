@@ -1,21 +1,19 @@
-import { useState } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea, Select, InlineInput, InlineSelect, rowStatusClass } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const STORAGE_KEY = "esg_form_01A";
-const INITIAL = acmeFormData["01A"] ?? {};
 
 const ESITI = ["sì", "no", "N/A", "condizionato"];
 const CONFORMITA = ["sì", "no", "condizionato"];
 
-export default function Form01A() {
-  const [d, setD] = useState(INITIAL);
-  const [clausole, setClausole] = useState(INITIAL.clausole || []);
-  const set = (k, v) => setD(p => ({ ...p, [k]: v }));
-  const setClausola = (i, k, v) => setClausole(p => { const n = [...p]; n[i] = { ...n[i], [k]: v }; return n; });
+export default function Form01A({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01A");
+
+  const clausole = d?.clausole ?? [];
+  const setClausola = (i, k, v) => {
+    const n = [...clausole];
+    n[i] = { ...n[i], [k]: v };
+    updateField("clausole", n);
+  };
 
   const tutte_ok = clausole.every(c => c.conforme !== "no");
   const critiche = clausole.filter(c => c.conforme === "no").length;
@@ -29,25 +27,26 @@ export default function Form01A() {
       meta={{ "Fase": "PROC-01.1", "Input": "Contratto firmato OFF-00E", "Resp.": "Partner + Legal", "Output": "Contratto approvato" }}
       ruleBox="📌 Verificare ogni clausola del contratto rispetto all'offerta accettata. In caso di difformità CRITICA, bloccare l'avvio e contattare il partner."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <FormSection title="Dati contratto">
         <Field label="N. contratto" required>
-          <Input value={d.num_contratto} onChange={v => set("num_contratto", v)} className="font-mono" />
+          <Input value={d?.num_contratto} onChange={v => updateField("num_contratto", v)} className="font-mono" />
         </Field>
         <Field label="Data firma">
-          <Input type="date" value={d.data_firma} onChange={v => set("data_firma", v)} />
+          <Input type="date" value={d?.data_firma} onChange={v => updateField("data_firma", v)} />
         </Field>
         <Field label="Data decorrenza">
-          <Input type="date" value={d.data_decorrenza} onChange={v => set("data_decorrenza", v)} />
+          <Input type="date" value={d?.data_decorrenza} onChange={v => updateField("data_decorrenza", v)} />
         </Field>
         <Field label="Importo netto (€)">
-          <Input type="number" value={d.importo_netto} onChange={v => set("importo_netto", v)} className="font-mono" />
+          <Input type="number" value={d?.importo_netto} onChange={v => updateField("importo_netto", v)} className="font-mono" />
         </Field>
       </FormSection>
 
-      {/* RIEPILOGO */}
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Clausole totali", value: clausole.length, color: "text-foreground" },
@@ -100,13 +99,13 @@ export default function Form01A() {
 
       <FormSection title="Esito e firma">
         <Field label="Esito validazione" required>
-          <Select value={d.esito_validazione} onChange={v => set("esito_validazione", v)} options={["APPROVATO", "APPROVATO CON RISERVA", "BLOCCATO"]} />
+          <Select value={d?.esito_validazione} onChange={v => updateField("esito_validazione", v)} options={["APPROVATO", "APPROVATO CON RISERVA", "BLOCCATO"]} />
         </Field>
         <Field label="Validato da">
-          <Input value={d.validato_da} onChange={v => set("validato_da", v)} />
+          <Input value={d?.validato_da} onChange={v => updateField("validato_da", v)} />
         </Field>
         <Field label="Note legali" span={2}>
-          <Textarea value={d.note_legali} onChange={v => set("note_legali", v)} rows={2} />
+          <Textarea value={d?.note_legali} onChange={v => updateField("note_legali", v)} rows={2} />
         </Field>
       </FormSection>
     </FormWrapper>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form02A from "./Form02A";
 import Form02B from "./Form02B";
 import Form02C from "./Form02C";
@@ -27,17 +28,11 @@ const STATUS_ICONS = {
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc02() {
+export default function TabProc02({ engagementId }) {
   const [active, setActive] = useState("02A");
-  const [statuses] = useState({
-    "02A": "completato", "02B": "completato", "02C": "completato",
-    "02D": "in_corso", "02E": "in_corso",
-    "02F": "non_iniziato", "02G": "non_iniziato", "02H": "non_iniziato",
-  });
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-02");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -82,7 +77,7 @@ export default function TabProc02() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );
