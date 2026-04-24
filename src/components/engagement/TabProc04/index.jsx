@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form04A from "./Form04A";
 import Form04B from "./Form04B";
 import Form04C from "./Form04C";
@@ -14,9 +15,9 @@ const FASI = [
   { code: "04B", label: "Calcoli GHG Scope 1/2/3", sub: "Fase 4.2", component: Form04B },
   { code: "04C", label: "KPI Ambientali (E)", sub: "Fase 4.3", component: Form04C },
   { code: "04D", label: "KPI Sociali (S)", sub: "Fase 4.4", component: Form04D },
-  { code: "04E", label: "KPI Governance (G)", sub: "Fase 4.5", component: Form04E },
+  { code: "04E", label: "KPI Library E/S/G", sub: "Fase 4.5", component: Form04E },
   { code: "04F", label: "Validazione Quality Check", sub: "Fase 4.6", component: Form04F },
-  { code: "04G", label: "Freeze Dataset / LOG-04", sub: "Fase 4.7", component: Form04G },
+  { code: "04G", label: "Freeze Dataset", sub: "Fase 4.7", component: Form04G },
 ];
 
 const STATUS_ICONS = {
@@ -25,17 +26,11 @@ const STATUS_ICONS = {
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc04() {
+export default function TabProc04({ engagementId }) {
   const [active, setActive] = useState("04A");
-  const [statuses] = useState({
-    "04A": "completato", "04B": "completato", "04C": "in_corso",
-    "04D": "in_corso", "04E": "non_iniziato",
-    "04F": "non_iniziato", "04G": "non_iniziato",
-  });
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-04");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -65,7 +60,7 @@ export default function TabProc04() {
                     : "hover:bg-muted text-foreground"
                 )}
               >
-                {STATUS_ICONS[statuses[fase.code] || "non_iniziato"]}
+                {STATUS_ICONS[statuses?.[fase.code] || "non_iniziato"]}
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-xs font-semibold truncate", active === fase.code ? "text-primary" : "")}>
                     FORM-{fase.code}
@@ -80,7 +75,7 @@ export default function TabProc04() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );
