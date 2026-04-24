@@ -64,10 +64,7 @@ export function useCompleteScadenza() {
     mutationFn: async (id) => {
       const { data, error } = await supabase
         .from('scadenze')
-        .update({
-          stato: 'completata',
-          data_completamento: new Date().toISOString(),
-        })
+        .update({ stato: 'completata' })
         .eq('id', id)
         .select()
         .single();

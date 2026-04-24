@@ -30,6 +30,11 @@ export function useCreateRischio(engagementId) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('Utente non autenticato');
+
       const { data: existing, error: selErr } = await supabase
         .from('rischi')
         .select('codice')
@@ -39,7 +44,12 @@ export function useCreateRischio(engagementId) {
       const codice = nextCodice(existing);
       const { data, error } = await supabase
         .from('rischi')
-        .insert({ ...payload, engagement_id: engagementId, codice })
+        .insert({
+          ...payload,
+          engagement_id: engagementId,
+          user_id: userId,
+          codice,
+        })
         .select()
         .single();
       if (error) throw error;

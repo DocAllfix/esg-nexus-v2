@@ -18,9 +18,14 @@ export function useClienti() {
 
   const create = useMutation({
     mutationFn: async (payload) => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('Utente non autenticato');
+
       const { data, error } = await supabase
         .from('clienti')
-        .insert(payload)
+        .insert({ ...payload, user_id: userId })
         .select()
         .single();
       if (error) throw error;

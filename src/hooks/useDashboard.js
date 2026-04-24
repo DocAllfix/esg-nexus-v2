@@ -20,7 +20,7 @@ export function useDashboard() {
         supabase
           .from('engagements')
           .select('*, clienti(ragione_sociale, settore)')
-          .in('stato', ['in_corso', 'avviato'])
+          .eq('stato', 'in_corso')
           .order('created_at', { ascending: false }),
         supabase
           .from('rischi')
@@ -28,15 +28,15 @@ export function useDashboard() {
           .gte('score', 15),
         supabase
           .from('scadenze')
-          .select('id, descrizione, data_scadenza, priorita, engagement_id')
+          .select('id, titolo, descrizione, data_scadenza, priorita, engagement_id')
           .eq('stato', 'pending')
           .gte('data_scadenza', toISO(today))
           .lte('data_scadenza', toISO(in14)),
         supabase
           .from('azioni_giorno')
           .select('*')
-          .eq('data', toISO(today))
-          .order('ordine', { ascending: true }),
+          .eq('data_azione', toISO(today))
+          .order('created_at', { ascending: true }),
         supabase
           .from('eventi_log')
           .select('*')

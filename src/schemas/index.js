@@ -33,7 +33,8 @@ export const rischioSchema = z.object({
 
 export const contattoClienteSchema = z.object({
   cliente_id: z.string().uuid(),
-  nome: z.string().min(1),
+  nome: z.string().min(1, 'Nome obbligatorio'),
+  cognome: z.string().min(1, 'Cognome obbligatorio'),
   ruolo: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   telefono: z.string().optional(),
@@ -41,24 +42,29 @@ export const contattoClienteSchema = z.object({
 
 export const scadenzaSchema = z.object({
   engagement_id: z.string().uuid(),
-  descrizione: z.string().min(1),
+  titolo: z.string().min(1, 'Titolo obbligatorio'),
+  descrizione: z.string().optional(),
   data_scadenza: z.string(),
   priorita: z.enum(['bassa', 'media', 'alta', 'critica']).default('media'),
 });
 
 export const ghgVoceSchema = z.object({
   engagement_id: z.string().uuid(),
-  scope: z.enum(['1', '2', '3']),
-  categoria: z.string().optional(),
-  descrizione: z.string().min(1),
-  quantita: z.coerce.number().nonnegative(),
-  unita: z.string().min(1),
-  fattore_emissione: z.coerce.number().nonnegative(),
+  scope: z.coerce
+    .number()
+    .int()
+    .refine((v) => [1, 2, 3].includes(v), 'Scope deve essere 1, 2 o 3'),
+  categoria: z.string().min(1, 'Categoria obbligatoria'),
+  descrizione: z.string().optional(),
+  quantita: z.coerce.number().nonnegative().optional(),
+  unita: z.string().optional(),
+  fattore_emissione: z.coerce.number().nonnegative().optional(),
 });
 
 export const kpiValoreSchema = z.object({
   engagement_id: z.string().uuid(),
   kpi_code: z.string().min(1),
+  label: z.string().min(1, 'Label obbligatoria'),
   area: z.enum(['E', 'S', 'G']),
   valore_attuale: z.coerce.number().optional(),
   valore_target: z.coerce.number().optional(),

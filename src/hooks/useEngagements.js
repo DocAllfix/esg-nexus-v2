@@ -2,14 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/api/supabaseClient';
 
 const FASI_TEMPLATE = [
-  { codice: 'PROC-00', label: 'Acquisizione', ordine: 0 },
-  { codice: 'PROC-01', label: 'Avvio', ordine: 1 },
-  { codice: 'PROC-02', label: 'Materialità', ordine: 2 },
-  { codice: 'PROC-03', label: 'Gap Analysis', ordine: 3 },
-  { codice: 'PROC-04', label: 'Dati GHG', ordine: 4 },
-  { codice: 'PROC-05', label: 'Piano Azione', ordine: 5 },
-  { codice: 'PROC-06', label: 'Bilancio', ordine: 6 },
-  { codice: 'PROC-07', label: 'Chiusura', ordine: 7 },
+  { proc_code: 'PROC-00', label: 'Acquisizione' },
+  { proc_code: 'PROC-01', label: 'Avvio' },
+  { proc_code: 'PROC-02', label: 'Materialità' },
+  { proc_code: 'PROC-03', label: 'Gap Analysis' },
+  { proc_code: 'PROC-04', label: 'Dati GHG' },
+  { proc_code: 'PROC-05', label: 'Piano Azione' },
+  { proc_code: 'PROC-06', label: 'Bilancio' },
+  { proc_code: 'PROC-07', label: 'Chiusura' },
 ];
 
 export function useEngagements() {
@@ -46,19 +46,23 @@ export function useCreateEngagement() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('Utente non autenticato');
+
       const { data: eng, error } = await supabase
         .from('engagements')
-        .insert(payload)
+        .insert({ ...payload, user_id: userId })
         .select()
         .single();
       if (error) throw error;
 
       const fasi = FASI_TEMPLATE.map((f) => ({
         engagement_id: eng.id,
-        codice: f.codice,
+        proc_code: f.proc_code,
         label: f.label,
-        ordine: f.ordine,
-        stato: 'non_iniziato',
+        stato: 'non_iniziata',
       }));
       const { error: fasiError } = await supabase
         .from('engagement_fasi')
