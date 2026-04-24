@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form07A from "./Form07A";
 import Form07B from "./Form07B";
 import Form07C from "./Form07C";
@@ -11,33 +12,27 @@ import Form07G from "./Form07G";
 import Form07LOG from "./Form07LOG";
 
 const FASI = [
-  { code: "07A", label: "Dossier finale", sub: "Fase 7.1", component: Form07A },
-  { code: "07B", label: "Soddisfazione & NPS", sub: "Fase 7.2", component: Form07B },
-  { code: "07C", label: "Proposta rinnovo", sub: "Fase 7.3", component: Form07C },
-  { code: "07D", label: "Follow-up 30 gg", sub: "Fase 7.4", component: Form07D },
-  { code: "07E", label: "Follow-up 3 Mesi", sub: "Fase 7.5", component: Form07E },
-  { code: "07F", label: "Lesson Learned", sub: "Fase 7.6", component: Form07F },
-  { code: "07G", label: "Chiusura formale", sub: "Fase 7.7", component: Form07G },
-  { code: "07LOG", label: "Chiusura Engagement", sub: "LOG-07 Finale", component: Form07LOG },
+  { code: "07A",   label: "Dossier finale",     component: Form07A },
+  { code: "07B",   label: "Soddisfazione & NPS", component: Form07B },
+  { code: "07C",   label: "Proposta rinnovo",    component: Form07C },
+  { code: "07D",   label: "Follow-up 30 gg",     component: Form07D },
+  { code: "07E",   label: "Follow-up 3 Mesi",    component: Form07E },
+  { code: "07F",   label: "Lesson Learned",      component: Form07F },
+  { code: "07G",   label: "Chiusura formale",    component: Form07G },
+  { code: "07LOG", label: "Chiusura Engagement", component: Form07LOG },
 ];
 
 const STATUS_ICONS = {
-  completato: <CheckCircle2 size={14} className="text-green-600 shrink-0" />,
-  in_corso: <Clock size={14} className="text-amber-500 shrink-0" />,
+  completato:   <CheckCircle2 size={14} className="text-green-600 shrink-0" />,
+  in_corso:     <Clock size={14} className="text-amber-500 shrink-0" />,
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc07() {
-  const [active, setActive] = useState("07B");
-  const [statuses] = useState({
-    "07A": "completato", "07B": "completato", "07C": "in_corso",
-    "07D": "in_corso", "07E": "non_iniziato", "07F": "non_iniziato",
-    "07G": "non_iniziato", "07LOG": "non_iniziato",
-  });
+export default function TabProc07({ engagementId }) {
+  const [active, setActive] = useState("07A");
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-07");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -67,7 +62,7 @@ export default function TabProc07() {
                     : "hover:bg-muted text-foreground"
                 )}
               >
-                {STATUS_ICONS[statuses[fase.code] || "non_iniziato"]}
+                {STATUS_ICONS[statuses?.[fase.code] || "non_iniziato"]}
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-xs font-semibold truncate", active === fase.code ? "text-primary" : "")}>
                     FORM-{fase.code}
@@ -82,7 +77,7 @@ export default function TabProc07() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );
