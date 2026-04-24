@@ -1,8 +1,6 @@
-import { useState } from "react";
-import FormWrapper, { FormSection, Field, Input, Textarea, Select } from "@/components/common/FormWrapper";
+import FormWrapper, { FormSection, Field, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "esg_form_05A";
 
 const PILASTRI = [
   { key: "E", label: "Ambiente", color: "border-green-300 bg-green-50/40", dot: "bg-green-500" },
@@ -10,16 +8,20 @@ const PILASTRI = [
   { key: "G", label: "Governance", color: "border-purple-300 bg-purple-50/40", dot: "bg-purple-500" },
 ];
 
-export default function Form05A() {
-  const [vision, setVision] = useState("Acme Manufacturing S.p.A. si impegna a diventare un'azienda manifatturiera carbon-neutral entro il 2035, leader nel settore automotive per responsabilità sociale e trasparenza di governance, creando valore sostenibile per i propri stakeholder nel lungo periodo.");
-  const [mission_esg, setMissionEsg] = useState("Integrare la sostenibilità in ogni processo decisionale, riducendo il proprio impatto ambientale, valorizzando le persone e mantenendo standard etici elevati nella gestione aziendale e nella catena di fornitura.");
-  const [pilastri, setPilastri] = useState([
-    { key: "E", impegno: "Raggiungere la carbon neutrality operativa (Scope 1+2) entro il 2030 e allinearsi ai target SBTi. Aumentare la quota di energia rinnovabile al 80% entro il 2027. Azzerare i rifiuti in discarica entro il 2028.", drivers: "Pressione clienti OEM (Stellantis), requisiti CSRD, opportunità riduzione costi energetici." },
-    { key: "S", impegno: "Zero infortuni gravi entro il 2026. Raggiungere il 40% di donne in posizioni manageriali entro il 2028. Implementare un programma di audit sostenibilità su tutti i fornitori critici entro il 2026.", drivers: "Attrattività talenti, requisiti ESRS S1-S2, riduzione rischi operativi e reputazionali." },
-    { key: "G", impegno: "Pubblicare il bilancio di sostenibilità conforme GRI/ESRS annualmente dal 2025. Istituire un Comitato ESG in seno al CdA entro il 2025. Allineare il 20% della remunerazione variabile del management a KPI ESG.", drivers: "Accesso al credito ESG-linked, requisiti CSRD, miglioramento rating ESG." },
-  ]);
+const DEFAULT_PILASTRI = [
+  { key: "E", impegno: "", drivers: "" },
+  { key: "S", impegno: "", drivers: "" },
+  { key: "G", impegno: "", drivers: "" },
+];
 
-  const setPilastro = (key, field, value) => setPilastri(p => p.map(pi => pi.key === key ? { ...pi, [field]: value } : pi));
+export default function Form05A({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "05A");
+
+  const pilastri = d?.pilastri ?? DEFAULT_PILASTRI;
+  const setPilastro = (key, field, value) => {
+    const n = pilastri.map(pi => pi.key === key ? { ...pi, [field]: value } : pi);
+    updateField("pilastri", n);
+  };
 
   return (
     <FormWrapper
@@ -27,17 +29,19 @@ export default function Form05A() {
       title="Visione Strategica ESG"
       subtitle="Definizione di vision, mission ESG e pilastri strategici per area E/S/G"
       meta={{ "Fase": "PROC-05.1", "Resp.": "Partner + CEO Cliente", "Output": "Vision ESG approvata dal CdA" }}
-      ruleBox="🎯 La visione strategica ESG deve essere coerente con il business model aziendale, materialmente ancorata agli IRO identificati e approvata dal vertice."
+      ruleBox="La visione strategica ESG deve essere coerente con il business model aziendale, materialmente ancorata agli IRO identificati e approvata dal vertice."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <FormSection title="Vision & Mission ESG" cols={1}>
-        <Field label="Vision ESG (lungo periodo)" required>
-          <Textarea value={vision} onChange={setVision} rows={3} />
+        <Field label="Vision ESG (lungo periodo)">
+          <Textarea value={d?.vision} onChange={v => updateField("vision", v)} rows={3} placeholder="Descrivere la visione di lungo periodo dell'azienda in ambito sostenibilità..." />
         </Field>
         <Field label="Mission ESG (impegno operativo)">
-          <Textarea value={mission_esg} onChange={setMissionEsg} rows={2} />
+          <Textarea value={d?.mission_esg} onChange={v => updateField("mission_esg", v)} rows={2} placeholder="Descrivere l'impegno operativo concreto per la sostenibilità..." />
         </Field>
       </FormSection>
 
@@ -52,10 +56,10 @@ export default function Form05A() {
                   <span className="font-bold text-sm">Pilastro {p.key} — {p.label}</span>
                 </div>
                 <Field label="Impegni strategici principali">
-                  <Textarea value={pi?.impegno || ""} onChange={v => setPilastro(p.key, "impegno", v)} rows={3} />
+                  <Textarea value={pi?.impegno || ""} onChange={v => setPilastro(p.key, "impegno", v)} rows={3} placeholder="Elencare i principali impegni strategici per quest'area..." />
                 </Field>
                 <Field label="Driver e motivazioni (business case)">
-                  <Textarea value={pi?.drivers || ""} onChange={v => setPilastro(p.key, "drivers", v)} rows={2} />
+                  <Textarea value={pi?.drivers || ""} onChange={v => setPilastro(p.key, "drivers", v)} rows={2} placeholder="Motivazioni, pressioni di mercato, requisiti normativi..." />
                 </Field>
               </div>
             );

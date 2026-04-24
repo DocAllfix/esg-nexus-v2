@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form05A from "./Form05A";
 import Form05B from "./Form05B";
 import Form05C from "./Form05C";
@@ -11,14 +12,14 @@ import Form05G from "./Form05G";
 import Form05LOG from "./Form05LOG";
 
 const FASI = [
-  { code: "05A", label: "Visione Strategica", sub: "Fase 5.1", component: Form05A },
-  { code: "05B", label: "Obiettivi SMART", sub: "Fase 5.2", component: Form05B },
-  { code: "05C", label: "Target Quantitativi / SBTi", sub: "Fase 5.3", component: Form05C },
-  { code: "05D", label: "Catalogo Iniziative", sub: "Fase 5.4", component: Form05D },
-  { code: "05E", label: "Budget 3 Anni", sub: "Fase 5.5", component: Form05E },
-  { code: "05F", label: "Roadmap", sub: "Fase 5.6", component: Form05F },
-  { code: "05G", label: "Workshop CdA", sub: "Fase 5.7", component: Form05G },
-  { code: "05LOG", label: "Chiusura Fase 5", sub: "LOG-05", component: Form05LOG },
+  { code: "05A", label: "Visione Strategica", component: Form05A },
+  { code: "05B", label: "Obiettivi SMART", component: Form05B },
+  { code: "05C", label: "Target Quantitativi / SBTi", component: Form05C },
+  { code: "05D", label: "Catalogo Iniziative", component: Form05D },
+  { code: "05E", label: "Budget 3 Anni", component: Form05E },
+  { code: "05F", label: "Roadmap", component: Form05F },
+  { code: "05G", label: "Workshop CdA", component: Form05G },
+  { code: "05LOG", label: "Chiusura Fase 5", component: Form05LOG },
 ];
 
 const STATUS_ICONS = {
@@ -27,17 +28,11 @@ const STATUS_ICONS = {
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc05() {
+export default function TabProc05({ engagementId }) {
   const [active, setActive] = useState("05A");
-  const [statuses] = useState({
-    "05A": "completato", "05B": "completato", "05C": "non_iniziato",
-    "05D": "in_corso", "05E": "in_corso", "05F": "non_iniziato",
-    "05G": "non_iniziato", "05LOG": "non_iniziato",
-  });
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-05");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -67,7 +62,7 @@ export default function TabProc05() {
                     : "hover:bg-muted text-foreground"
                 )}
               >
-                {STATUS_ICONS[statuses[fase.code] || "non_iniziato"]}
+                {STATUS_ICONS[statuses?.[fase.code] || "non_iniziato"]}
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-xs font-semibold truncate", active === fase.code ? "text-primary" : "")}>
                     FORM-{fase.code}
@@ -82,7 +77,7 @@ export default function TabProc05() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );
