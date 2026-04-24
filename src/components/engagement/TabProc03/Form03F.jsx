@@ -1,9 +1,8 @@
 import { useState } from "react";
-import FormWrapper, { FormSection, Field, Textarea, Select } from "@/components/common/FormWrapper";
-import { AlertCircle, AlertTriangle, AlertOctagon, Plus, Trash2 } from "lucide-react";
+import FormWrapper, { FormSection } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
+import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "esg_form_03F";
 
 const PRIORITA = ["CRITICA", "ALTA", "MEDIA", "BASSA"];
 const AREE = ["E", "S", "G"];
@@ -20,27 +19,16 @@ const BADGE_COLORS = {
   BASSA: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-const INITIAL_GAPS = [
-  { id: 1, area: "E", codice: "GAP-E01", titolo: "Piano di transizione climatica assente", descrizione: "L'azienda non dispone di un piano di transizione Net Zero approvato dal CdA, come richiesto da ESRS E1-1. Non sono stati fissati target di riduzione GHG a breve e lungo termine.", ref: "ESRS E1-1 / GRI 305-5", priorita: "CRITICA", effort: "Alto", action: "Sviluppare un piano di transizione climatica con target SBTi entro Q4 2025" },
-  { id: 2, area: "E", codice: "GAP-E02", titolo: "Scope 3 non misurato (cat. 1, 11, 12)", descrizione: "Le emissioni Scope 3 sono solo parzialmente stimate. Mancano le categorie 1 (acquisti), 11 (uso prodotti), 12 (fine vita). È richiesta una metodologia documentata (GHG Protocol).", ref: "GRI 305-3 / ESRS E1-6", priorita: "ALTA", effort: "Alto", action: "Commissionare survey fornitori e calcolo Scope 3 completo per FY2025" },
-  { id: 3, area: "E", codice: "GAP-E03", titolo: "Monitoraggio intensità energetica assente", descrizione: "L'energia è tracciata in valore assoluto ma non normalizzata per unità prodotta. ESRS E1-5 richiede KPI di intensità.", ref: "GRI 302-3 / ESRS E1-5", priorita: "MEDIA", effort: "Basso", action: "Definire KPI intensità energetica (MWh/unità prodotta) entro Q2 2025" },
-  { id: 4, area: "E", codice: "GAP-E04", titolo: "Analisi impatto biodiversità non condotta", descrizione: "Non è stata effettuata alcuna analisi di impatto sulla biodiversità del sito produttivo di Brescia. Richiesta da ESRS E4.", ref: "GRI 304-1 / ESRS E4", priorita: "MEDIA", effort: "Medio", action: "Screening biodiversità sito produttivo con strumento TNFD entro Q3 2025" },
-  { id: 5, area: "S", codice: "GAP-S01", titolo: "Policy D&I non formalizzata", descrizione: "Non esiste una politica D&I scritta e approvata. Mancano obiettivi di parità di genere e un piano di azioni affirmative.", ref: "ESRS S1-1", priorita: "CRITICA", effort: "Medio", action: "Redazione e approvazione CdA Policy D&I con target 2025-2027 entro Q2 2025" },
-  { id: 6, area: "S", codice: "GAP-S02", titolo: "Gender pay gap non calcolato", descrizione: "Il gap retributivo di genere non è monitorato con metodologia documentata. È un KPI obbligatorio ESRS S1-16 per le aziende CSRD.", ref: "GRI 405-2 / ESRS S1-16", priorita: "ALTA", effort: "Basso", action: "Calcolo gender pay gap per categoria Q1/Q2 2025 e pubblicazione" },
-  { id: 7, area: "S", codice: "GAP-S03", titolo: "Supply chain ESG non strutturata", descrizione: "Assenza di: policy fornitori con requisiti ESG, questionari di auto-valutazione, audit on-site. Gap significativo per ESRS S2.", ref: "GRI 414-1/2 / ESRS S2", priorita: "ALTA", effort: "Alto", action: "Sviluppare Supply Chain Policy e questionario ESG fornitori top-30 entro Q3 2025" },
-  { id: 8, area: "S", codice: "GAP-S04", titolo: "Welfare e benessere organizzativo non rilevato", descrizione: "Non viene condotta alcuna indagine sul benessere dei dipendenti. Indicatore emergente richiesto da ESRS S1.", ref: "ESRS S1-14", priorita: "BASSA", effort: "Basso", action: "Predisporre engagement survey annuale entro Q3 2025" },
-  { id: 9, area: "G", codice: "GAP-G01", titolo: "Canale whistleblowing non attivato", descrizione: "L'azienda non ha attivato il canale di segnalazione interna richiesto dal D.Lgs. 24/2023 (recepimento direttiva UE 2019/1937). Rischio sanzionatorio.", ref: "GRI 2-26 / ESRS G1-3 / D.Lgs. 24/2023", priorita: "CRITICA", effort: "Basso", action: "Attivazione piattaforma whistleblowing conforme entro Q2 2025 — priorità assoluta" },
-  { id: 10, area: "G", codice: "GAP-G02", titolo: "Codice etico obsoleto — manca anti-corruzione", descrizione: "Il codice etico è del 2019 e non contiene clausole esplicite di anti-corruzione (GRI 205). Non allineato con requisiti ESRS G1-3.", ref: "GRI 205-1 / ESRS G1-3", priorita: "ALTA", effort: "Basso", action: "Aggiornamento codice etico con sezione anti-corruzione entro Q2 2025" },
-  { id: 11, area: "G", codice: "GAP-G03", titolo: "Nessun bilancio di sostenibilità pubblicato", descrizione: "Prima rendicontazione. Nessun processo strutturato di raccolta dati ESG. Assenza totale di assurance esterna.", ref: "GRI 2-3 / ESRS 1", priorita: "ALTA", effort: "Alto", action: "Obiettivo principale del presente engagement — avvio rendicontazione GRI + ESRS" },
-];
+export default function Form03F({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "03F");
 
-export default function Form03F() {
-  const [gaps, setGaps] = useState(INITIAL_GAPS);
+  const gaps = d?.gaps ?? [];
   const [filtroArea, setFiltroArea] = useState("TUTTI");
   const [filtroPriorita, setFiltroPriorita] = useState("TUTTI");
-  const setRow = (i, k, v) => setGaps(p => { const n = [...p]; n[i] = { ...n[i], [k]: v }; return n; });
-  const remove = (id) => setGaps(p => p.filter(g => g.id !== id));
-  const add = () => setGaps(p => [...p, { id: Date.now(), area: "E", codice: `GAP-${Date.now()}`, titolo: "", descrizione: "", ref: "", priorita: "MEDIA", effort: "Medio", action: "" }]);
+
+  const setRow = (i, k, v) => { const n = [...gaps]; n[i] = { ...n[i], [k]: v }; updateField("gaps", n); };
+  const remove = (id) => updateField("gaps", gaps.filter(g => g.id !== id));
+  const add = () => updateField("gaps", [...gaps, { id: Date.now(), area: "E", codice: `GAP-${Date.now()}`, titolo: "", descrizione: "", ref: "", priorita: "MEDIA", effort: "Medio", action: "" }]);
 
   const filtered = gaps.filter(g =>
     (filtroArea === "TUTTI" || g.area === filtroArea) &&
@@ -54,11 +42,13 @@ export default function Form03F() {
       formCode="FORM-03F"
       title="Sintesi Gap — Registro Completo"
       subtitle="Riepilogo di tutti i gap identificati per area, priorità e piano d'azione"
-      meta={{ "Fase": "PROC-03.6", "Resp.": "Elena Mancini", "Output": "Gap Register ufficiale" }}
-      ruleBox="🔍 Il Gap Register alimenta direttamente il Piano di Azione ESG (PROC-05). Prioritizzare i gap CRITICI e ALTI per intervento immediato."
+      meta={{ "Fase": "PROC-03.6", "Resp.": "Analista ESG", "Output": "Gap Register ufficiale" }}
+      ruleBox="Il Gap Register alimenta direttamente il Piano di Azione ESG (PROC-05). Prioritizzare i gap CRITICI e ALTI per intervento immediato."
       ruleBoxType="warning"
-      storageKey={STORAGE_KEY}
-      initialData={{}}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
       <div className="grid grid-cols-4 gap-3">
         {stats.map(s => (
@@ -69,7 +59,6 @@ export default function Form03F() {
         ))}
       </div>
 
-      {/* FILTRI */}
       <div className="flex gap-2 flex-wrap">
         <span className="text-xs text-muted-foreground self-center">Area:</span>
         {["TUTTI", "E", "S", "G"].map(a => (

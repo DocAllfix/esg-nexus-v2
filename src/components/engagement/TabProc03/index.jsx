@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormStatuses } from "@/hooks/useFormData";
 import Form03A from "./Form03A";
 import Form03B from "./Form03B";
 import Form03C from "./Form03C";
@@ -16,7 +17,7 @@ const FASI = [
   { code: "03C", label: "Audit Ambientale (E)", sub: "Fase 3.3", component: Form03C },
   { code: "03D", label: "Audit Sociale (S)", sub: "Fase 3.4", component: Form03D },
   { code: "03E", label: "Audit Governance (G)", sub: "Fase 3.5", component: Form03E },
-  { code: "03F", label: "Interviste Management", sub: "Fase 3.6", component: Form03F },
+  { code: "03F", label: "Gap Register", sub: "Fase 3.6", component: Form03F },
   { code: "03G", label: "Report Diagnosi ESG", sub: "Fase 3.7", component: Form03G },
   { code: "03H", label: "Chiusura Fase 3", sub: "LOG-03", component: Form03H },
 ];
@@ -27,17 +28,11 @@ const STATUS_ICONS = {
   non_iniziato: <Circle size={14} className="text-gray-400 shrink-0" />,
 };
 
-export default function TabProc03() {
+export default function TabProc03({ engagementId }) {
   const [active, setActive] = useState("03A");
-  const [statuses] = useState({
-    "03A": "completato", "03B": "completato", "03C": "completato",
-    "03D": "completato", "03E": "in_corso", "03F": "in_corso",
-    "03G": "non_iniziato", "03H": "non_iniziato",
-  });
+  const { statuses, progresso } = useFormStatuses(engagementId, "PROC-03");
 
   const ActiveComponent = FASI.find(f => f.code === active)?.component;
-  const completati = Object.values(statuses).filter(s => s === "completato").length;
-  const progresso = Math.round((completati / FASI.length) * 100);
 
   return (
     <div className="flex gap-6 min-h-full">
@@ -82,7 +77,7 @@ export default function TabProc03() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        {ActiveComponent && <ActiveComponent />}
+        {ActiveComponent && <ActiveComponent engagementId={engagementId} />}
       </div>
     </div>
   );
