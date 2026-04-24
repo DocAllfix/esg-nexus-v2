@@ -1,11 +1,5 @@
-import { useState } from "react";
-import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup, CheckboxGroup } from "@/components/common/FormWrapper";
-
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const INITIAL = acmeFormData["00B"] ?? {};
-const STORAGE_KEY = "esg_engagement_ESG-2025-ACM-001_form_00B";
+import FormWrapper, { FormSection, Field, Input, Textarea, CheckboxGroup, RadioGroup } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 
 const TABLE_D1_ROWS = [
   "N. dipendenti per genere/contratto",
@@ -18,11 +12,15 @@ const TABLE_D1_ROWS = [
   "Tasso di assenteismo (%)"
 ];
 
-export default function Form00B() {
-  const [d, setD] = useState(INITIAL);
-  const set = (k, v) => setD(prev => ({ ...prev, [k]: v }));
-  const [d1, setD1] = useState(TABLE_D1_ROWS.map(() => ""));
-  const setD1Row = (i, v) => setD1(prev => { const n = [...prev]; n[i] = v; return n; });
+export default function Form00B({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "00B");
+
+  const d1 = d?.d1_table ?? TABLE_D1_ROWS.map(() => "");
+  const setD1Row = (i, v) => {
+    const n = [...d1];
+    n[i] = v;
+    updateField("d1_table", n);
+  };
 
   return (
     <FormWrapper
@@ -38,19 +36,21 @@ export default function Form00B() {
       }}
       ruleBox="📋 Il questionario va inviato al referente cliente via email con link. Spiegare che le risposte sono riservate e utilizzate esclusivamente per configurare la proposta di consulenza."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
 
       {/* BLOCCO A — Contesto strategico */}
       <FormSection title="Blocco A — Contesto strategico ESG" cols={1}>
         <Field label="A1. Precedenti esperienze di rendicontazione ESG / sostenibilità" span={2}>
-          <Textarea value={d.A1_precedenti} onChange={v => set("A1_precedenti", v)} rows={3} placeholder="Descrivere eventuali bilanci, report, certificazioni o rating ESG già ottenuti..." />
+          <Textarea value={d?.A1_precedenti} onChange={v => updateField("A1_precedenti", v)} rows={3} placeholder="Descrivere eventuali bilanci, report, certificazioni o rating ESG già ottenuti..." />
         </Field>
         <Field label="A2. Standard già utilizzati (se applicabili)">
           <CheckboxGroup
-            values={d.A2_standard || []}
-            onChange={v => set("A2_standard", v)}
+            values={d?.A2_standard || []}
+            onChange={v => updateField("A2_standard", v)}
             cols={2}
             options={[
               "GRI Standards",
@@ -67,8 +67,8 @@ export default function Form00B() {
         </Field>
         <Field label="A3. Principali obiettivi del progetto ESG" span={2}>
           <CheckboxGroup
-            values={d.A3_obiettivi || []}
-            onChange={v => set("A3_obiettivi", v)}
+            values={d?.A3_obiettivi || []}
+            onChange={v => updateField("A3_obiettivi", v)}
             cols={2}
             options={[
               "Requisiti clienti OEM",
@@ -85,12 +85,12 @@ export default function Form00B() {
           />
         </Field>
         <Field label="A4. Chi è il principale sponsor del progetto?" span={2}>
-          <Input value={d.A4_sponsor} onChange={v => set("A4_sponsor", v)} placeholder="Nome, ruolo e livello gerarchico dello sponsor" />
+          <Input value={d?.A4_sponsor} onChange={v => updateField("A4_sponsor", v)} placeholder="Nome, ruolo e livello gerarchico dello sponsor" />
         </Field>
         <Field label="A5. Orizzonte temporale del progetto" span={2}>
           <RadioGroup
-            value={d.A5_orizzonte}
-            onChange={v => set("A5_orizzonte", v)}
+            value={d?.A5_orizzonte}
+            onChange={v => updateField("A5_orizzonte", v)}
             options={[
               "Urgente: pubblicazione entro 6 mesi",
               "Breve: pubblicazione entro settembre 2025",
@@ -106,8 +106,8 @@ export default function Form00B() {
         <p className="text-xs text-muted-foreground -mt-2 mb-2">Selezionare le voci applicabili per i consumi energetici dell'azienda.</p>
         <Field label="B1. Dati energetici disponibili (seleziona tutti applicabili)">
           <CheckboxGroup
-            values={d.B1_e_energia || []}
-            onChange={v => set("B1_e_energia", v)}
+            values={d?.B1_e_energia || []}
+            onChange={v => updateField("B1_e_energia", v)}
             cols={2}
             options={[
               "Bollette gas (completo)",
@@ -123,7 +123,7 @@ export default function Form00B() {
           />
         </Field>
         <Field label="B2. Sistemi di monitoraggio energia attivi" span={2}>
-          <Textarea value={d.B2_sistemi_energia} onChange={v => set("B2_sistemi_energia", v)} rows={2} placeholder="Descrivere eventuali contatori, sistemi BMS, ISO 50001, SCADA..." />
+          <Textarea value={d?.B2_sistemi_energia} onChange={v => updateField("B2_sistemi_energia", v)} rows={2} placeholder="Descrivere eventuali contatori, sistemi BMS, ISO 50001, SCADA..." />
         </Field>
       </FormSection>
 
@@ -131,8 +131,8 @@ export default function Form00B() {
       <FormSection title="Blocco C — Emissioni GHG" cols={1}>
         <Field label="C1. Disponibilità dati GHG per vettore energetico">
           <CheckboxGroup
-            values={d.C1_e_emissioni || []}
-            onChange={v => set("C1_e_emissioni", v)}
+            values={d?.C1_e_emissioni || []}
+            onChange={v => updateField("C1_e_emissioni", v)}
             cols={2}
             options={[
               "Dati gas naturale disponibili (archivio storico 3 anni)",
@@ -147,8 +147,8 @@ export default function Form00B() {
         </Field>
         <Field label="C2. Vettori energetici presenti in azienda">
           <CheckboxGroup
-            values={d.C2_vettori || []}
-            onChange={v => set("C2_vettori", v)}
+            values={d?.C2_vettori || []}
+            onChange={v => updateField("C2_vettori", v)}
             cols={2}
             options={[
               "Gas naturale (Smc)",
@@ -164,8 +164,8 @@ export default function Form00B() {
         </Field>
         <Field label="C3. Acque e rifiuti — disponibilità dati">
           <CheckboxGroup
-            values={d.C3_acque_rifiuti || []}
-            onChange={v => set("C3_acque_rifiuti", v)}
+            values={d?.C3_acque_rifiuti || []}
+            onChange={v => updateField("C3_acque_rifiuti", v)}
             cols={2}
             options={[
               "I consumi idrici non sono monitorati",
@@ -215,8 +215,8 @@ export default function Form00B() {
         </Field>
         <Field label="D2. Politiche sociali adottate">
           <CheckboxGroup
-            values={d.D2_politiche || []}
-            onChange={v => set("D2_politiche", v)}
+            values={d?.D2_politiche || []}
+            onChange={v => updateField("D2_politiche", v)}
             cols={2}
             options={[
               "Codice Etico approvato dal CdA",
@@ -236,8 +236,8 @@ export default function Form00B() {
       <FormSection title="Blocco E — Governance (G)" cols={1}>
         <Field label="E1. Struttura di governance">
           <CheckboxGroup
-            values={d.E1_governance || []}
-            onChange={v => set("E1_governance", v)}
+            values={d?.E1_governance || []}
+            onChange={v => updateField("E1_governance", v)}
             cols={2}
             options={[
               "CdA / organo di governo presente e formalizzato",
@@ -251,8 +251,8 @@ export default function Form00B() {
         </Field>
         <Field label="E2. Compliance e controlli">
           <CheckboxGroup
-            values={d.E2_compliance || []}
-            onChange={v => set("E2_compliance", v)}
+            values={d?.E2_compliance || []}
+            onChange={v => updateField("E2_compliance", v)}
             cols={2}
             options={[
               "Modello Organizzativo ex D.Lgs. 231/2001 adottato",
@@ -271,8 +271,8 @@ export default function Form00B() {
       <FormSection title="Blocco F — Progetto e fattibilità" cols={1}>
         <Field label="F1. Livello di sponsorship del vertice aziendale">
           <RadioGroup
-            value={d.F1_sponsor}
-            onChange={v => set("F1_sponsor", v)}
+            value={d?.F1_sponsor}
+            onChange={v => updateField("F1_sponsor", v)}
             options={[
               "Sì, CEO/AD è sponsor diretto",
               "Sì, con delega a direttore funzionale",
@@ -283,39 +283,39 @@ export default function Form00B() {
         </Field>
         <Field label="F2. Budget disponibile per il progetto">
           <CheckboxGroup
-            values={d.F2_budget || []}
-            onChange={v => set("F2_budget", v)}
+            values={d?.F2_budget || []}
+            onChange={v => updateField("F2_budget", v)}
             cols={2}
             options={["< €5.000", "€5.000 – €15.000", "€15.000 – €30.000", "€30.000 – €60.000", "€60.000 – €100.000", "> €100.000", "Budget non ancora definito"]}
           />
         </Field>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Field label="F3. Prima pubblicazione desiderata">
-            <input type="date" value={d.F3_pubblicazione || ""} onChange={e => set("F3_pubblicazione", e.target.value)} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+            <input type="date" value={d?.F3_pubblicazione || ""} onChange={e => updateField("F3_pubblicazione", e.target.value)} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
           </Field>
           <Field label="Anno di rendicontazione">
-            <Input value={d.F3_anno_rendicontazione} onChange={v => set("F3_anno_rendicontazione", v)} placeholder="Es. 2024" />
+            <Input value={d?.F3_anno_rendicontazione} onChange={v => updateField("F3_anno_rendicontazione", v)} placeholder="Es. 2024" />
           </Field>
           <div />
         </div>
         <Field label="F3. Vincoli esterni (assemblea azionisti, board, scadenze, gare)" span={2}>
-          <Textarea value={d.F3_vincoli} onChange={v => set("F3_vincoli", v)} rows={2} />
+          <Textarea value={d?.F3_vincoli} onChange={v => updateField("F3_vincoli", v)} rows={2} />
         </Field>
       </FormSection>
 
       {/* Dati compilatore */}
       <FormSection title="Dati del compilatore">
         <Field label="Nome e cognome">
-          <Input value={d.comp_nome} onChange={v => set("comp_nome", v)} placeholder="Nome Cognome" />
+          <Input value={d?.comp_nome} onChange={v => updateField("comp_nome", v)} placeholder="Nome Cognome" />
         </Field>
         <Field label="Funzione aziendale">
-          <Input value={d.comp_funzione} onChange={v => set("comp_funzione", v)} placeholder="CFO, HR Director, ecc." />
+          <Input value={d?.comp_funzione} onChange={v => updateField("comp_funzione", v)} placeholder="CFO, HR Director, ecc." />
         </Field>
         <Field label="Email">
-          <Input type="email" value={d.comp_email} onChange={v => set("comp_email", v)} placeholder="nome@azienda.it" />
+          <Input type="email" value={d?.comp_email} onChange={v => updateField("comp_email", v)} placeholder="nome@azienda.it" />
         </Field>
         <Field label="Data compilazione">
-          <Input type="date" value={d.comp_data} onChange={v => set("comp_data", v)} />
+          <Input type="date" value={d?.comp_data} onChange={v => updateField("comp_data", v)} />
         </Field>
       </FormSection>
 

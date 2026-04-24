@@ -1,13 +1,8 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const STORAGE_KEY = "esg_engagement_ESG-2025-ACM-001_form_00C";
-const INITIAL = acmeFormData["00C"] ?? {};
 
 const CRITERI = [
   {
@@ -46,17 +41,15 @@ const CRITERI = [
   }
 ];
 
-const LABELS = { 1: "🔴 Molto basso", 2: "🟠 Basso", 3: "🟡 Medio", 4: "🟢 Alto", 5: "🔵 Molto alto" };
 const COLORS_SCORE = { 1: "text-red-600 bg-red-50", 2: "text-orange-600 bg-orange-50", 3: "text-yellow-600 bg-yellow-50", 4: "text-green-600 bg-green-50", 5: "text-blue-600 bg-blue-50" };
 
-export default function Form00C() {
-  const [d, setD] = useState(INITIAL);
-  const [scores, setScores] = useState(INITIAL.scores || {});
-  const set = (k, v) => setD(prev => ({ ...prev, [k]: v }));
-  const setScore = (k, v) => setScores(prev => ({ ...prev, [k]: Number(v) }));
+export default function Form00C({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "00C");
+
+  const scores = d?.scores ?? {};
+  const setScore = (k, v) => updateField("scores", { ...scores, [k]: Number(v) });
 
   const { pesato, rawAvg, decisione } = useMemo(() => {
-    const allKeys = CRITERI.flatMap(c => c.items.map(i => i.key));
     const totalPeso = CRITERI.flatMap(c => c.items).reduce((s, i) => s + i.peso, 0);
     let pesato = 0;
     let sumAll = 0, countAll = 0;
@@ -89,18 +82,19 @@ export default function Form00C() {
       meta={{ "Fase": "0.5", "Resp.": "Consulente Senior ESG", "Input": "FORM-00A + 00B", "Timing": "Entro 2 giorni dal questionario", "Output": "Score pesato + decisione Go/No-Go" }}
       ruleBox="⚠ USO INTERNO: da compilare esclusivamente dal Consulente Senior ESG. Non condividere con il cliente."
       ruleBoxType="danger"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
 
       <FormSection title="Dati di riferimento">
-        <Field label="Cliente"><Input value={d.cliente_nome} onChange={v => set("cliente_nome", v)} /></Field>
-        <Field label="Data valutazione"><Input type="date" value={d.data_valutazione} onChange={v => set("data_valutazione", v)} /></Field>
-        <Field label="Consulente"><Input value={d.consulente} onChange={v => set("consulente", v)} /></Field>
-        <Field label="CRM ID"><Input value={d.crm_id} onChange={v => set("crm_id", v)} className="font-mono" /></Field>
+        <Field label="Cliente"><Input value={d?.cliente_nome} onChange={v => updateField("cliente_nome", v)} /></Field>
+        <Field label="Data valutazione"><Input type="date" value={d?.data_valutazione} onChange={v => updateField("data_valutazione", v)} /></Field>
+        <Field label="Consulente"><Input value={d?.consulente} onChange={v => updateField("consulente", v)} /></Field>
+        <Field label="CRM ID"><Input value={d?.crm_id} onChange={v => updateField("crm_id", v)} className="font-mono" /></Field>
       </FormSection>
 
-      {/* GRIGLIA 14 CRITERI */}
       <FormSection title="Griglia di valutazione — 14 criteri" cols={1}>
         <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-3">
           <strong>Scala:</strong> 1 🔴 Molto basso · 2 🟠 Basso · 3 🟡 Medio · 4 🟢 Alto · 5 🔵 Molto alto. &nbsp;
@@ -156,7 +150,6 @@ export default function Form00C() {
         </div>
       </FormSection>
 
-      {/* SCORE SUMMARY + RADAR */}
       <FormSection title="Score Summary" cols={1}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className={cn("rounded-xl border-2 p-6 space-y-4", decisioneConfig[decisione].cls)}>
@@ -188,16 +181,15 @@ export default function Form00C() {
         </div>
       </FormSection>
 
-      {/* NOTE */}
       <FormSection title="Note e motivazione decisione" cols={1}>
         <Field label="Punti di forza del cliente">
-          <Textarea value={d.punti_forza} onChange={v => set("punti_forza", v)} rows={3} />
+          <Textarea value={d?.punti_forza} onChange={v => updateField("punti_forza", v)} rows={3} />
         </Field>
         <Field label="Criticità e rischi identificati">
-          <Textarea value={d.criticita} onChange={v => set("criticita", v)} rows={3} />
+          <Textarea value={d?.criticita} onChange={v => updateField("criticita", v)} rows={3} />
         </Field>
         <Field label="Motivazione della decisione">
-          <Textarea value={d.motivazione_decisione} onChange={v => set("motivazione_decisione", v)} rows={3} />
+          <Textarea value={d?.motivazione_decisione} onChange={v => updateField("motivazione_decisione", v)} rows={3} />
         </Field>
         <Field label="Decisione finale" span={2}>
           <div className="space-y-2">
@@ -207,17 +199,17 @@ export default function Form00C() {
               { v: "NOGO", label: "🛑 NO-GO (< 3.0) — Declinare con email motivata" },
             ].map(opt => (
               <label key={opt.v} className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="decisione_finale" value={opt.v} checked={d.decisione_finale === opt.v} onChange={() => set("decisione_finale", opt.v)} className="accent-primary" />
+                <input type="radio" name="decisione_finale" value={opt.v} checked={d?.decisione_finale === opt.v} onChange={() => updateField("decisione_finale", opt.v)} className="accent-primary" />
                 <span className="text-sm">{opt.label}</span>
               </label>
             ))}
           </div>
         </Field>
         <Field label="Firma consulente">
-          <Input value={d.firma_consulente} onChange={v => set("firma_consulente", v)} placeholder="Nome e qualifica" />
+          <Input value={d?.firma_consulente} onChange={v => updateField("firma_consulente", v)} placeholder="Nome e qualifica" />
         </Field>
         <Field label="Data firma">
-          <Input type="date" value={d.firma_data} onChange={v => set("firma_data", v)} />
+          <Input type="date" value={d?.firma_data} onChange={v => updateField("firma_data", v)} />
         </Field>
       </FormSection>
 

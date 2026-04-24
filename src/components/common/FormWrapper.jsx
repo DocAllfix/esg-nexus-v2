@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Save, FileText, FileDown, CheckCircle2, Clock, Circle, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Save, FileText, FileDown, CheckCircle2, Clock, Circle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Status config ───────────────────────────────────────────────────────────
@@ -20,43 +20,38 @@ const RULE_COLORS = {
 // ─── FormWrapper ─────────────────────────────────────────────────────────────
 export default function FormWrapper({
   formCode, title, subtitle, meta, ruleBox, ruleBoxType = "info",
-  children, storageKey, initialData = {}
+  children,
+  status = "non_iniziato",
+  onStatusChange,
+  onSave,
+  isSaving = false,
 }) {
-  const [status, setStatus] = useState(initialData._status || "non_iniziato");
   const [savedAt, setSavedAt] = useState(null);
-  const [data, setData] = useState(initialData);
+  const onSaveRef = useRef(onSave);
+  useEffect(() => { onSaveRef.current = onSave; });
 
-  useEffect(() => {
-    if (!storageKey) return;
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setData(parsed);
-        setStatus(parsed._status || "non_iniziato");
-      }
-    } catch {}
-  }, [storageKey]);
-
-  const save = useCallback(() => {
-    if (storageKey) localStorage.setItem(storageKey, JSON.stringify({ ...data, _status: status }));
+  const handleSave = async () => {
+    await onSaveRef.current?.();
     setSavedAt(new Date());
-  }, [storageKey, data, status]);
+  };
 
   useEffect(() => {
     const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); save(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [save]);
+  }, []); // stable — handleSave reads latest onSave via ref
 
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.non_iniziato;
   const StatusIcon = cfg.icon;
 
   const cycleStatus = () => {
     const s = ["non_iniziato", "in_corso", "completato"];
-    setStatus(s[(s.indexOf(status) + 1) % s.length]);
+    onStatusChange?.(s[(s.indexOf(status) + 1) % s.length]);
   };
 
   return (
@@ -84,11 +79,16 @@ export default function FormWrapper({
               <h2 className="text-lg font-semibold text-foreground leading-tight">{title}</h2>
               {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
             </div>
-            {savedAt && (
-              <p className="text-xs text-muted-foreground shrink-0 mt-1">
-                Salvato {savedAt.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
-              </p>
-            )}
+            <div className="shrink-0 mt-1 text-xs text-muted-foreground text-right">
+              {isSaving && (
+                <span className="flex items-center gap-1">
+                  <Loader2 size={11} className="animate-spin" /> Salvando…
+                </span>
+              )}
+              {!isSaving && savedAt && (
+                <span>Salvato {savedAt.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</span>
+              )}
+            </div>
           </div>
 
           {/* Meta info */}
@@ -126,7 +126,7 @@ export default function FormWrapper({
             </button>
             <button
               onClick={() => {
-                const blob = new Blob(["\ufeff<html><body>" + (document.querySelector(".form-printable")?.innerHTML || "") + "</body></html>"], { type: "application/msword" });
+                const blob = new Blob(["﻿<html><body>" + (document.querySelector(".form-printable")?.innerHTML || "") + "</body></html>"], { type: "application/msword" });
                 const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${formCode}.doc` });
                 a.click(); URL.revokeObjectURL(a.href);
               }}
@@ -137,14 +137,16 @@ export default function FormWrapper({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={save}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:bg-muted transition-colors text-foreground"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:bg-muted transition-colors text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save size={13} /> Salva bozza
+              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Salva bozza
             </button>
             <button
-              onClick={() => { setStatus("completato"); save(); }}
-              className="flex items-center gap-1.5 px-4 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-semibold"
+              onClick={() => { onStatusChange?.("completato"); handleSave(); }}
+              disabled={isSaving}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckCircle2 size={13} /> Segna completata
             </button>

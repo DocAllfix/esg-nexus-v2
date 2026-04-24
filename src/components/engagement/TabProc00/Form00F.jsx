@@ -1,25 +1,18 @@
-import { useState } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+import { useFormData } from "@/hooks/useFormData";
 import { cn } from "@/lib/utils";
 
-// TODO: Replace with Supabase hook
-const acmeFormData = {};
-
-const STORAGE_KEY = "esg_engagement_ESG-2025-ACM-001_form_00F";
-const INITIAL = acmeFormData["00F"] ?? {};
-
 const ESITI = ["OK", "KO", "N/A"];
-const ESITO_COLORS = { OK: "text-green-700 bg-green-50", KO: "text-red-700 bg-red-50", "N/A": "text-gray-500 bg-gray-50" };
 
-export default function Form00F() {
-  const [d, setD] = useState(INITIAL);
-  const [rows, setRows] = useState(INITIAL.kyc_rows || []);
-  const set = (k, v) => setD(prev => ({ ...prev, [k]: v }));
-  const setRow = (i, k, v) => setRows(prev => {
-    const n = [...prev];
+export default function Form00F({ engagementId }) {
+  const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "00F");
+
+  const rows = d?.kyc_rows ?? [];
+  const setRow = (i, k, v) => {
+    const n = [...rows];
     n[i] = { ...n[i], [k]: v };
-    return n;
-  });
+    updateField("kyc_rows", n);
+  };
 
   const okCount = rows.filter(r => r.esito === "OK").length;
   const koCount = rows.filter(r => r.esito === "KO").length;
@@ -32,11 +25,12 @@ export default function Form00F() {
       meta={{ "Fase": "Pre-contratto", "Resp.": "Consulente Senior ESG", "Input": "FORM-00C esito GO", "Timing": "Prima di FORM-00E", "Output": "Fascicolo KYC firmato" }}
       ruleBox="📌 Da completare prima della firma del contratto. Allegare la documentazione verificata al fascicolo cliente."
       ruleBoxType="info"
-      storageKey={STORAGE_KEY}
-      initialData={INITIAL}
+      status={status}
+      onStatusChange={updateStatus}
+      onSave={saveForm}
+      isSaving={isSaving}
     >
 
-      {/* TABELLA KYC */}
       <FormSection title="Tabella Verifiche KYC — 10 controlli" cols={1}>
         <div className="flex gap-4 mb-3 text-sm">
           <span className="text-green-700 font-semibold">✓ OK: {okCount}</span>
@@ -97,7 +91,6 @@ export default function Form00F() {
         </div>
       </FormSection>
 
-      {/* ESITO FINALE */}
       <FormSection title="Esito finale KYC" cols={1}>
         <Field label="Esito KYC complessivo">
           <div className="space-y-2">
@@ -108,20 +101,20 @@ export default function Form00F() {
               { v: "RESPINTO", label: "🛑 RESPINTO — Criticità gravi — No-Go definitivo" },
             ].map(opt => (
               <label key={opt.v} className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="kyc_esito_finale" value={opt.v} checked={d.esito_finale === opt.v} onChange={() => set("esito_finale", opt.v)} className="accent-primary" />
+                <input type="radio" name="kyc_esito_finale" value={opt.v} checked={d?.esito_finale === opt.v} onChange={() => updateField("esito_finale", opt.v)} className="accent-primary" />
                 <span className="text-sm">{opt.label}</span>
               </label>
             ))}
           </div>
         </Field>
         <Field label="Note e motivazione" span={2}>
-          <Textarea value={d.note_motivazione} onChange={v => set("note_motivazione", v)} rows={3} placeholder="Spiegare eventuali criticità riscontrate e decisione adottata..." />
+          <Textarea value={d?.note_motivazione} onChange={v => updateField("note_motivazione", v)} rows={3} placeholder="Spiegare eventuali criticità riscontrate e decisione adottata..." />
         </Field>
         <Field label="Verificato da">
-          <Input value={d.verificato_da} onChange={v => set("verificato_da", v)} />
+          <Input value={d?.verificato_da} onChange={v => updateField("verificato_da", v)} />
         </Field>
         <Field label="Data verifica">
-          <Input type="date" value={d.data_verifica} onChange={v => set("data_verifica", v)} />
+          <Input type="date" value={d?.data_verifica} onChange={v => updateField("data_verifica", v)} />
         </Field>
       </FormSection>
 
