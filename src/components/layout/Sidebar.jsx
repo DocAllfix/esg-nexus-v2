@@ -44,7 +44,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-14 bottom-0 z-20 flex flex-col border-r border-border bg-card transition-all duration-300",
+      "fixed left-0 top-14 bottom-0 z-20 flex flex-col border-r border-border bg-card transition-all duration-300 print:hidden",
       collapsed ? "w-16" : "w-60"
     )}>
       <nav className="flex-1 overflow-y-auto py-4 px-2">

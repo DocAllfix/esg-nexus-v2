@@ -111,3 +111,84 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--text-muted));
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print stylesheet — pulisce la pagina per stampa o "Salva come PDF"
+   nel dialog del browser. Tutta la chrome (Topbar, Sidebar, bottoni
+   azione) è già nascosta via `print:hidden` Tailwind sui componenti.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* A4 con margini standard */
+  @page {
+    size: A4;
+    margin: 18mm 14mm 18mm 14mm;
+  }
+
+  /* Reset background ovunque -> bianco, testo nero. Risparmio toner
+     e leggibilità su carta. Le HSL custom restano validi ovunque servano. */
+  html, body {
+    background: white !important;
+    color: black !important;
+    font-size: 10.5pt;
+  }
+
+  /* Force light theme for print even if user toggled dark mode in UI */
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 30%;
+    --border: 0 0% 80%;
+  }
+
+  /* Niente shadows, niente sticky, niente fixed */
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .fixed { position: static !important; }
+
+  /* Le card del form perdono cornice/sfondo: meno rumore visivo */
+  .form-printable .bg-card {
+    background: transparent !important;
+  }
+
+  /* Sezioni: evita di spezzarle a metà pagina quando possibile */
+  .form-printable section,
+  .form-printable .form-section,
+  .form-printable [class*="rounded-xl"],
+  .form-printable [class*="rounded-lg"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* I link non vanno sottolineati su carta (non si possono cliccare comunque) */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* Il dialog/drawer/portal di radix non deve mai stampare */
+  [role="dialog"],
+  [data-radix-popper-content-wrapper],
+  [data-state="open"][role="menu"] {
+    display: none !important;
+  }
+
+  /* SyncIndicator e OfflineBadge ridondanti su carta */
+  [aria-live="polite"][role="status"] {
+    display: none !important;
+  }
+
+  /* Header di pagina: in alto, meno appariscente del titolo del form */
+  .form-printable {
+    position: relative;
+  }
+
+  /* Footer pagina: piccolo, neutrale */
+  /* (page numbers e data sono iniettati dal browser nel print dialog) */
+}

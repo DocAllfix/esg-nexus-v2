@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, FileText, FileDown, CheckCircle2, Clock, Circle, Loader2 } from "lucide-react";
+import { Save, Printer, CheckCircle2, Clock, Circle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Status config ───────────────────────────────────────────────────────────
@@ -55,31 +55,35 @@ export default function FormWrapper({
   };
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 form-printable" data-print-form-code={formCode}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-border">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm print:border-0 print:shadow-none print:rounded-none">
+        <div className="px-6 py-5 border-b border-border print:px-0 print:py-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md tracking-wider">
+                <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md tracking-wider print:bg-transparent print:px-0">
                   {formCode}
                 </span>
                 <button
                   onClick={cycleStatus}
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold cursor-pointer hover:opacity-75 transition-opacity",
+                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold cursor-pointer hover:opacity-75 transition-opacity print:hidden",
                     cfg.classes
                   )}
                 >
                   <StatusIcon size={10} />
                   {cfg.label}
                 </button>
+                {/* Print-only static status label */}
+                <span className="hidden print:inline text-[11px] font-semibold text-foreground">
+                  · Stato: {cfg.label}
+                </span>
               </div>
               <h2 className="text-lg font-semibold text-foreground leading-tight">{title}</h2>
               {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
             </div>
-            <div className="shrink-0 mt-1 text-xs text-muted-foreground text-right">
+            <div className="shrink-0 mt-1 text-xs text-muted-foreground text-right print:hidden">
               {isSaving && (
                 <span className="flex items-center gap-1">
                   <Loader2 size={11} className="animate-spin" /> Salvando…
@@ -115,24 +119,15 @@ export default function FormWrapper({
           {children}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-border bg-muted/20 flex items-center justify-between gap-3 flex-wrap">
+        {/* Footer (hidden in print) */}
+        <div className="px-6 py-3.5 border-t border-border bg-muted/20 flex items-center justify-between gap-3 flex-wrap print:hidden">
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.print()}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              title="Apri il dialog di stampa del browser. Da lì puoi salvare come PDF (Destinazione → Salva come PDF)."
             >
-              <FileText size={13} /> PDF
-            </button>
-            <button
-              onClick={() => {
-                const blob = new Blob(["﻿<html><body>" + (document.querySelector(".form-printable")?.innerHTML || "") + "</body></html>"], { type: "application/msword" });
-                const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${formCode}.doc` });
-                a.click(); URL.revokeObjectURL(a.href);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              <FileDown size={13} /> Word
+              <Printer size={13} /> Stampa / Salva PDF
             </button>
           </div>
           <div className="flex items-center gap-2">

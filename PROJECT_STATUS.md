@@ -121,7 +121,7 @@
 - [x] I1 — GitHub Actions CI workflow: lint + test + build su push/PR
 
 ### Skipped (con motivazione)
-- [ ] C2 — bottoni PDF/Word in FormWrapper: utente vuole analizzare a parte
+- [x] C2 — bottoni PDF/Word in FormWrapper: rimossi i 2 bottoni rotti, sostituito con singolo "Stampa / Salva PDF" che apre il dialog browser nativo. Aggiunto CSS @media print globale + Tailwind print:hidden su Sidebar/Topbar/azioni/tabs/aside (Option B)
 - [ ] M2 — RPC get_dashboard_data: overkill per single-user, defer post-MVP
 - [ ] M5 — CSP nonce-based: alto rischio regressione dev mode, defer
 - [ ] Q3 — Quick-create da CommandPalette: scope creep, defer

@@ -28,10 +28,10 @@ export default function AppLayout() {
       />
       <Sidebar collapsed={sidebarCollapsed} />
       <main className={cn(
-        "pt-14 transition-all duration-300",
-        sidebarCollapsed ? "pl-16" : "pl-60"
+        "pt-14 transition-all duration-300 print:pt-0",
+        sidebarCollapsed ? "pl-16 print:pl-0" : "pl-60 print:pl-0"
       )}>
-        <div className="px-8 py-6 min-h-[calc(100vh-56px)]">
+        <div className="px-8 py-6 min-h-[calc(100vh-56px)] print:px-0 print:py-0 print:min-h-0">
           <Outlet />
         </div>
       </main>

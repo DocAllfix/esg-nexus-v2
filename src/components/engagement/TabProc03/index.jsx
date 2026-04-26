@@ -36,7 +36,7 @@ export default function TabProc03({ engagementId }) {
 
   return (
     <div className="flex gap-6 min-h-full">
-      <aside className="w-56 shrink-0">
+      <aside className="w-56 shrink-0 print:hidden">
         <div className="bg-card border border-border rounded-xl overflow-hidden sticky top-0">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">PROC-03</p>

@@ -64,7 +64,7 @@ function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
         ]}
         subtitle={`${clienteNome} · Anno ${eng?.anno_rendicontazione}`}
         actions={
-          <>
+          <div className="flex items-center gap-2 print:hidden">
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors">
               <Folder size={15} /> Cartella documenti
             </button>
@@ -74,7 +74,7 @@ function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
               <FileText size={15} /> Genera bilancio
             </button>
-          </>
+          </div>
         }
       />
 
@@ -103,7 +103,7 @@ function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
         </div>
       </div>
 
-      <div className="flex border-b border-border mb-6 gap-0 overflow-x-auto">
+      <div className="flex border-b border-border mb-6 gap-0 overflow-x-auto print:hidden">
         {TABS.map(t => (
           <button
             key={t}
