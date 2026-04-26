@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useFormData } from "@/hooks/useFormData";
 
-// Evidenze per settimana dalla MARCIA originale
 const EVIDENZE_PER_SETT = [
   {
     sett: "Sett. 1-2",
@@ -99,15 +98,17 @@ const EVIDENZE_PER_SETT = [
   },
 ];
 
-export default function EvidenzeView() {
-  const [checked, setChecked] = useState({});
+const totalItems = EVIDENZE_PER_SETT.reduce((acc, s) => acc + s.items.length, 0);
+
+export default function EvidenzeView({ engagementId }) {
+  const { data: d, updateField } = useFormData(engagementId, "EVIDENZE");
+  const checked = d?.checked ?? {};
 
   const toggle = (settIdx, itemIdx) => {
     const key = `${settIdx}-${itemIdx}`;
-    setChecked(prev => ({ ...prev, [key]: !prev[key] }));
+    updateField("checked", { ...checked, [key]: !checked[key] });
   };
 
-  const totalItems = EVIDENZE_PER_SETT.reduce((acc, s) => acc + s.items.length, 0);
   const checkedCount = Object.values(checked).filter(Boolean).length;
 
   return (
@@ -117,7 +118,7 @@ export default function EvidenzeView() {
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">📎 Evidenze per Settimana — Checklist documenti da richiedere al cliente</p>
         <p className="text-xs text-muted-foreground">Spunta le evidenze man mano che vengono raccolte · {checkedCount}/{totalItems} raccolte</p>
         <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.round((checkedCount/totalItems)*100)}%` }} />
+          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.round((checkedCount / totalItems) * 100)}%` }} />
         </div>
       </div>
 

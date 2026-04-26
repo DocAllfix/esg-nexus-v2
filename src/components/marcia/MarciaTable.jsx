@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useFormData } from "@/hooks/useFormData";
 
 // 35 sessioni di lavoro esatte dalla Tabella di Marcia originale
 const SESSIONI = [
@@ -58,15 +59,18 @@ const PROC_COLOR = {
 
 const STATO_OPTIONS = ["Aperto", "In corso", "Completato", "Rimandato"];
 
-export default function MarciaTable() {
-  const [stati, setStati] = useState(() => Object.fromEntries(SESSIONI.map(s => [s.n, "Aperto"])));
+export default function MarciaTable({ engagementId }) {
+  const { data: d, updateField } = useFormData(engagementId, "MARCIA");
+  const stati = d?.stati ?? {};
+  const date  = d?.date  ?? {};
+
   const [filterProc, setFilterProc] = useState("tutti");
 
   const procOptions = ["tutti", ...new Set(SESSIONI.map(s => s.proc))];
   const filtered = filterProc === "tutti" ? SESSIONI : SESSIONI.filter(s => s.proc === filterProc);
 
   const completate = Object.values(stati).filter(v => v === "Completato").length;
-  const inCorso = Object.values(stati).filter(v => v === "In corso").length;
+  const inCorso    = Object.values(stati).filter(v => v === "In corso").length;
 
   return (
     <div className="space-y-4">
@@ -114,7 +118,7 @@ export default function MarciaTable() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(s => {
-                const stato = stati[s.n];
+                const stato = stati[s.n] ?? "Aperto";
                 const isCompletato = stato === "Completato";
                 const isInCorso = stato === "In corso";
                 return (
@@ -125,8 +129,14 @@ export default function MarciaTable() {
                       <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{s.n}</span>
                     </td>
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">{s.sett}</td>
+
                     <td className="px-3 py-2.5">
-                      <input type="date" className="border border-border rounded px-1.5 py-0.5 text-[10px] bg-background focus:outline-none focus:ring-1 focus:ring-ring w-[110px]" />
+                      <input
+                        type="date"
+                        value={date[s.n] ?? ""}
+                        onChange={e => updateField("date", { ...date, [s.n]: e.target.value })}
+                        className="border border-border rounded px-1.5 py-0.5 text-[10px] bg-background focus:outline-none focus:ring-1 focus:ring-ring w-[110px]"
+                      />
                     </td>
                     <td className={cn("px-3 py-2.5 font-medium whitespace-nowrap text-[10px]", PROC_COLOR[s.proc] || "text-foreground")}>
                       {s.proc}
@@ -149,7 +159,7 @@ export default function MarciaTable() {
                     <td className="px-3 py-2.5">
                       <select
                         value={stato}
-                        onChange={e => setStati(prev => ({ ...prev, [s.n]: e.target.value }))}
+                        onChange={e => updateField("stati", { ...stati, [s.n]: e.target.value })}
                         className={cn(
                           "border rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer",
                           isCompletato ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400" :

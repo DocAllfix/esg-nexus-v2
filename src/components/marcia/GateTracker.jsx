@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { CheckCircle2, Clock, Circle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormData } from "@/hooks/useFormData";
 
-// 6 Gate reali dalla MARCIA originale
 const GATES = [
   {
     id: "G1",
@@ -64,9 +63,10 @@ const statoIcon = {
   "A rischio": Flag,
 };
 
-export default function GateTracker() {
-  const [stati, setStati] = useState(() => Object.fromEntries(GATES.map(g => [g.id, "Aperto"])));
-  const [date, setDate] = useState(() => Object.fromEntries(GATES.map(g => [g.id, { prevista: "", effettiva: "" }])));
+export default function GateTracker({ engagementId }) {
+  const { data: d, updateField } = useFormData(engagementId, "GATE");
+  const stati = d?.stati ?? {};
+  const date  = d?.date  ?? {};
 
   const completati = Object.values(stati).filter(v => v === "Completato").length;
 
@@ -78,7 +78,7 @@ export default function GateTracker() {
         <p className="text-xs text-muted-foreground">6 gate di controllo che sbloccano le fasi successive · Ogni gate richiede un deliverable firmato</p>
         <div className="flex items-center gap-2 mt-3">
           {GATES.map(g => {
-            const s = stati[g.id];
+            const s = stati[g.id] ?? "Aperto";
             const Icon = statoIcon[s];
             return (
               <div key={g.id} className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold", statoStyle[s])}>
@@ -94,7 +94,7 @@ export default function GateTracker() {
       {/* Gate cards */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {GATES.map(g => {
-          const stato = stati[g.id];
+          const stato = stati[g.id] ?? "Aperto";
           const Icon = statoIcon[stato];
           const isCompletato = stato === "Completato";
           const isRischio = stato === "A rischio";
@@ -121,7 +121,7 @@ export default function GateTracker() {
                 </div>
                 <select
                   value={stato}
-                  onChange={e => setStati(prev => ({ ...prev, [g.id]: e.target.value }))}
+                  onChange={e => updateField("stati", { ...stati, [g.id]: e.target.value })}
                   className="border border-border rounded-md px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   {STATO_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -151,16 +151,16 @@ export default function GateTracker() {
                 <div>
                   <p className="text-[10px] text-muted-foreground mb-1">Data prevista</p>
                   <input type="date"
-                    value={date[g.id]?.prevista || ""}
-                    onChange={e => setDate(prev => ({ ...prev, [g.id]: { ...prev[g.id], prevista: e.target.value } }))}
+                    value={date[g.id]?.prevista ?? ""}
+                    onChange={e => updateField("date", { ...date, [g.id]: { ...(date[g.id] ?? {}), prevista: e.target.value } })}
                     className="w-full border border-border rounded px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground mb-1">Data effettiva</p>
                   <input type="date"
-                    value={date[g.id]?.effettiva || ""}
-                    onChange={e => setDate(prev => ({ ...prev, [g.id]: { ...prev[g.id], effettiva: e.target.value } }))}
+                    value={date[g.id]?.effettiva ?? ""}
+                    onChange={e => updateField("date", { ...date, [g.id]: { ...(date[g.id] ?? {}), effettiva: e.target.value } })}
                     className="w-full border border-border rounded px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>

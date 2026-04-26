@@ -86,8 +86,10 @@ export default function StatoAvanzamento() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("matrix");
   const [search, setSearch] = useState("");
+  const [selectedEngagementId, setSelectedEngagementId] = useState("");
 
   const { data: engagements = [], isLoading, error } = useEngagementsWithFasi();
+  const effectiveEngId = selectedEngagementId || engagements[0]?.id || null;
 
   const totFasi    = engagements.length * FASI.length;
   const fasiFilled = engagements.reduce((acc, eng) =>
@@ -253,9 +255,29 @@ export default function StatoAvanzamento() {
           </div>
         )}
 
-        {activeTab === "marcia"   && <MarciaTable />}
-        {activeTab === "gate"     && <GateTracker />}
-        {activeTab === "evidenze" && <EvidenzeView />}
+        {["marcia", "gate", "evidenze"].includes(activeTab) && (
+          <div className="flex items-center gap-3 pb-2">
+            <span className="text-xs text-muted-foreground shrink-0">Engagement:</span>
+            <select
+              value={effectiveEngId ?? ""}
+              onChange={e => setSelectedEngagementId(e.target.value)}
+              className="border border-border rounded-md px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring max-w-xs"
+            >
+              {engagements.length === 0 && (
+                <option value="">Nessun engagement disponibile</option>
+              )}
+              {engagements.map(eng => (
+                <option key={eng.id} value={eng.id}>
+                  {eng.codice_progetto ?? "—"} — {eng.clienti?.ragione_sociale ?? "—"}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {activeTab === "marcia"   && <MarciaTable   engagementId={effectiveEngId} />}
+        {activeTab === "gate"     && <GateTracker   engagementId={effectiveEngId} />}
+        {activeTab === "evidenze" && <EvidenzeView  engagementId={effectiveEngId} />}
         {activeTab === "raci"     && <RaciMatrix />}
       </div>
     </DataGuard>
