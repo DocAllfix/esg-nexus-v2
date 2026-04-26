@@ -1,7 +1,10 @@
 # ESG Nexus — Project Status Tracker
 
-## P1 — Remove @/mock imports
-- [ ] Audit and replace all 39 @/mock imports
+## P1 — Remove @/mock imports + wire residual placeholders
+- [x] Audit confirmed zero @/mock imports remain in src/ (already done in earlier sessions)
+- [x] Cataloghi.jsx wired to catalogo_iro + kpi_definizioni via useCataloghi hook `pending`
+- [x] Cataloghi.jsx — removed crash-prone hardcoded arrays (irosAcme/kpiLibrary/ghgData) `pending`
+- [x] CommandPalette.jsx wired to useClienti + useEngagements `pending`
 
 ## P2 — Supabase migrations (6 files)
 - [ ] 00001_initial_schema.sql

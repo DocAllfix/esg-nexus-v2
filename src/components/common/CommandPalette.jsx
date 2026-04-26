@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { Search, Briefcase, Users, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// TODO: Replace with Supabase hook
-const clienti = [];
-const engagements = [];
+import { useClienti } from "@/hooks/useClienti";
+import { useEngagements } from "@/hooks/useEngagements";
 
 export default function CommandPalette({ open, onClose }) {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+
+  const { data: clienti = [] } = useClienti();
+  const { data: engagements = [] } = useEngagements();
 
   useEffect(() => {
     if (!open) setQuery("");
@@ -24,23 +25,47 @@ export default function CommandPalette({ open, onClose }) {
 
   if (!open) return null;
 
-  const results = [
-    ...engagements.filter(e =>
-      e.project_code.toLowerCase().includes(query.toLowerCase()) ||
-      e.cliente_nome.toLowerCase().includes(query.toLowerCase())
-    ).map(e => ({ tipo: "engagement", icon: Briefcase, label: e.project_code, sub: e.cliente_nome, to: `/engagements/${e.id}` })),
-    ...clienti.filter(c =>
-      c.ragione_sociale.toLowerCase().includes(query.toLowerCase())
-    ).map(c => ({ tipo: "cliente", icon: Users, label: c.ragione_sociale, sub: c.settore, to: `/clienti/${c.id}` })),
-  ];
+  const q = query.toLowerCase();
+
+  const engResults = engagements
+    .filter(e => {
+      if (!q) return false;
+      const code = (e.codice_progetto ?? "").toLowerCase();
+      const name = (e.clienti?.ragione_sociale ?? "").toLowerCase();
+      return code.includes(q) || name.includes(q);
+    })
+    .slice(0, 6)
+    .map(e => ({
+      tipo: "engagement",
+      icon: Briefcase,
+      label: e.codice_progetto ?? "—",
+      sub: e.clienti?.ragione_sociale ?? "—",
+      to: `/engagements/${e.id}`,
+    }));
+
+  const cliResults = clienti
+    .filter(c => {
+      if (!q) return false;
+      const name = (c.ragione_sociale ?? "").toLowerCase();
+      const sett = (c.settore ?? "").toLowerCase();
+      return name.includes(q) || sett.includes(q);
+    })
+    .slice(0, 6)
+    .map(c => ({
+      tipo: "cliente",
+      icon: Users,
+      label: c.ragione_sociale ?? "—",
+      sub: c.settore ?? "",
+      to: `/clienti/${c.id}`,
+    }));
 
   const shortcuts = [
-    { icon: LayoutDashboard, label: "Dashboard", to: "/" },
-    { icon: Users, label: "Clienti", to: "/clienti" },
-    { icon: Briefcase, label: "Engagement", to: "/engagements" },
+    { icon: LayoutDashboard, label: "Dashboard",  to: "/" },
+    { icon: Users,           label: "Clienti",    to: "/clienti" },
+    { icon: Briefcase,       label: "Engagement", to: "/engagements" },
   ];
 
-  const displayed = query ? results : shortcuts;
+  const displayed = query ? [...engResults, ...cliResults] : shortcuts;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24" onClick={onClose}>
@@ -66,7 +91,7 @@ export default function CommandPalette({ open, onClose }) {
           )}
           {displayed.map((item, i) => (
             <button
-              key={i}
+              key={`${item.to}-${i}`}
               onClick={() => { navigate(item.to); onClose(); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted text-left transition-colors"
             >
