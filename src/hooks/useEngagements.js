@@ -71,7 +71,10 @@ export function useCreateEngagement() {
 
       return eng;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['engagements'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['engagements'] });
+      qc.invalidateQueries({ queryKey: ['engagements_with_fasi'] });
+    },
   });
 }
 

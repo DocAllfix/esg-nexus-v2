@@ -13,6 +13,9 @@ export const clienteSchema = z.object({
   dipendenti: z.coerce.number().int().positive().optional(),
   fatturato_eur: z.coerce.number().int().nonnegative().optional(),
   nazione: z.string().length(2).default('IT'),
+  sito_web: z.string().url().optional().or(z.literal('')),
+  indirizzo: z.string().optional(),
+  note: z.string().optional(),
 });
 
 export const engagementSchema = z.object({

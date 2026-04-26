@@ -36,7 +36,10 @@ export default function NuovoClienteDrawer({ open, onClose, onCreate }) {
 
     setIsSaving(true);
     try {
-      await onCreate(result.data);
+      const payload = { ...result.data };
+      if (!payload.piva) delete payload.piva;
+      if (!payload.codice_fiscale) delete payload.codice_fiscale;
+      await onCreate(payload);
       toast({ title: "Cliente creato", description: result.data.ragione_sociale });
       setForm({ ragione_sociale: "", piva: "", codice_fiscale: "", ateco: "", settore: "", dipendenti: "", fatturato_eur: "", nazione: "IT", sito_web: "", indirizzo: "", note: "" });
       onClose();
