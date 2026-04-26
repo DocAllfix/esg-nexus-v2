@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 import PageHeader from "@/components/common/PageHeader";
 import DataGuard from "@/components/common/DataGuard";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, Users, Briefcase, Euro, Leaf, Shield } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Briefcase, Euro, Shield } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 const COLORS = ["#14b8a6", "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6"];

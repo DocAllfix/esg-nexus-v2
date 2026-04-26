@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2, Clock, AlertTriangle, AlertOctagon,
-  AlertCircle, XCircle, Loader2, Lock
+  AlertCircle, Loader2
 } from "lucide-react";
 
 const configs = {

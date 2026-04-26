@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase, FileText, Clock, AlertOctagon,
@@ -55,6 +55,30 @@ export default function Dashboard() {
 function DashboardContent({ data }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("dashboard-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "engagements" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "eventi_log" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "azioni_giorno" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const toggleAzione = useMutation({
     mutationFn: async ({ id, completata }) => {

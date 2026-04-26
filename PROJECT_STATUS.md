@@ -62,15 +62,29 @@
 - [x] DettaglioEngagement.jsx — useEngagement/useRischi/useScadenze, engagementId prop to all TabProc
 
 ## P5 — Pages wiring (Auth, Clienti, Engagements, Dashboard)
-- [ ] LoginPage.jsx
-- [ ] DashboardPage.jsx
-- [ ] ClientiPage.jsx
-- [ ] EngagementsPage.jsx
-- [ ] DettaglioClientePage.jsx
+- [x] Dashboard.jsx — useDashboard, KPI live, azioni toggle mutation `97199ff`
+- [x] Clienti.jsx — useClienti + useEngagements, zod validation `97199ff`
+- [x] Engagements.jsx — useEngagements, NuovoEngagementDialog `97199ff`
+- [x] DettaglioCliente.jsx — useCliente + useEngagements `97199ff`
+- [x] Analytics.jsx — useAnalytics, tutti i grafici live `97199ff`
+- [x] StatoAvanzamento.jsx — useEngagementsWithFasi, matrice live `97199ff`
+- [x] Sidebar.jsx — useEngagements per shortcut `97199ff`
+- [x] Topbar.jsx — useAuth, signOut `97199ff`
+- [x] Impostazioni.jsx — users_profile upsert `97199ff`
+- [x] NuovoClienteDrawer.jsx — clienteSchema validation `97199ff`
+- [x] NuovoEngagementDialog.jsx — engagementSchema validation (nuovo) `97199ff`
+- [x] P5 post-verification bug fixes (BUG-2 cache invalidation, BUG-3 empty strings, schema sito_web/indirizzo/note) `ab7a200`
 
-## P6 — Edge Functions + deploy
-- [ ] compute-engagement-progress
-- [ ] generate-project-code
-- [ ] check-deadlines
-- [ ] send-notification-email
-- [ ] Vercel deploy + env vars
+## P6 — Edge Functions + hardening
+- [x] compute-engagement-progress (LOG-003 dedup) `pending`
+- [x] generate-project-code `pending`
+- [x] check-deadlines `pending`
+- [x] send-notification-email (Resend) `pending`
+- [x] Storage buckets migration (00007_storage_buckets.sql) `pending`
+- [x] pg_cron documentation (SEC-001, manual setup) `pending`
+- [x] Realtime subscriptions in Dashboard `pending`
+- [x] ErrorBoundary global wrap `pending`
+- [x] vercel.json security headers (CSP/HSTS, REM-008 noted) `pending`
+- [x] Vitest + tests (5 tests, 3 files: useClienti, useFormData, useEngagements) `pending`
+- [x] E2E_SCENARIOS.md (5 Playwright scenarios documented) `pending`
+- [ ] Vercel deploy + env vars (post-merge)

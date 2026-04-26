@@ -54,7 +54,8 @@ export default function Impostazioni() {
     mutationFn: async (payload) => {
       const { error } = await supabase
         .from("users_profile")
-        .upsert({ id: user?.id, ...payload, updated_at: new Date().toISOString() });
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq("id", user?.id);
       if (error) throw error;
     },
     onSuccess: () => {
