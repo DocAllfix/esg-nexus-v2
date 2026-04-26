@@ -80,10 +80,10 @@
 - [x] P5 post-verification bug fixes (BUG-2 cache invalidation, BUG-3 empty strings, schema sito_web/indirizzo/note) `ab7a200`
 
 ## P6 — Edge Functions + hardening
-- [x] compute-engagement-progress (LOG-003 dedup) `pending`
-- [x] generate-project-code `pending`
-- [x] check-deadlines `pending`
-- [x] send-notification-email (Resend) `pending`
+- [x] compute-engagement-progress (LOG-003 dedup) `deployed v1 2026-04-26`
+- [x] generate-project-code `deployed v1 2026-04-26 — smoke test PASS`
+- [x] check-deadlines `deployed v1 2026-04-26`
+- [x] send-notification-email (Resend) `deployed v1 2026-04-26 — needs RESEND_API_KEY secret`
 - [x] Storage buckets migration (00007_storage_buckets.sql) `pending`
 - [x] pg_cron documentation (SEC-001, manual setup) `pending`
 - [x] Realtime subscriptions in Dashboard `pending`
