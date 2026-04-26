@@ -1,55 +1,91 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase, FileText, Clock, AlertOctagon,
   CheckCircle2, AlertTriangle, Star, Database,
-  Users, ArrowRight, TrendingUp, ChevronRight
+  Users, ArrowRight, ChevronRight
 } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import StatusBadge from "@/components/common/StatusBadge";
 import ProgressRing from "@/components/common/ProgressRing";
+import DataGuard from "@/components/common/DataGuard";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const engagements = [];
-const eventiRecenti = [];
-const azioniOggi = [];
+import { useDashboard } from "@/hooks/useDashboard";
+import { supabase } from "@/api/supabaseClient";
 
 const iconMap = { CheckCircle2, AlertTriangle, Star, Database, Users, FileText, Clock };
-
-// KPI summary cards
-const KPI_CONFIG = [
-  { label: "Engagement attivi", value: 3, sub: "+1 questo mese", icon: Briefcase, variant: "default" },
-  { label: "Bilanci da chiudere", value: 1, sub: "Scadenza ottobre", icon: FileText, variant: "warning" },
-  { label: "Azioni in scadenza", value: 4, sub: "di cui 2 oggi", icon: Clock, variant: "warning" },
-  { label: "Rischi critici", value: 2, sub: "Richiedono attenzione", icon: AlertOctagon, variant: "danger" },
-];
 
 const variantStyles = {
   default: { card: "border-border", icon: "bg-primary/10 text-primary", value: "text-foreground" },
   warning: { card: "border-amber-500/30", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400", value: "text-amber-600 dark:text-amber-400" },
-  danger: { card: "border-destructive/30", icon: "bg-destructive/10 text-destructive", value: "text-destructive" },
+  danger:  { card: "border-destructive/30", icon: "bg-destructive/10 text-destructive", value: "text-destructive" },
 };
 
+function formatRelativeTime(isoString) {
+  if (!isoString) return "";
+  const diff = Date.now() - new Date(isoString).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${m} min fa`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h fa`;
+  return `${Math.floor(h / 24)}g fa`;
+}
+
+function getEventIcon(tipo) {
+  const map = {
+    successo: CheckCircle2,
+    warning: AlertTriangle,
+    info: Star,
+    default: Clock,
+  };
+  return map[tipo] || map.default;
+}
+
 export default function Dashboard() {
+  const { data, isLoading, error } = useDashboard();
+
+  return (
+    <DataGuard data={data} isLoading={isLoading} error={error}>
+      <DashboardContent data={data} />
+    </DataGuard>
+  );
+}
+
+function DashboardContent({ data }) {
   const navigate = useNavigate();
-  const [azioni, setAzioni] = useState(azioniOggi);
+  const qc = useQueryClient();
 
+  const toggleAzione = useMutation({
+    mutationFn: async ({ id, completata }) => {
+      const { error } = await supabase
+        .from("azioni_giorno")
+        .update({ completata: !completata })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+
+  const azioni = data?.azioni ?? [];
+  const engagements = data?.engagements ?? [];
+  const eventiRecenti = data?.eventiRecenti ?? [];
   const completate = azioni.filter(a => a.completata).length;
-  const toggleAzione = (id) => setAzioni(prev => prev.map(a => a.id === id ? { ...a, completata: !a.completata } : a));
-
   const engAttivi = engagements.filter(e => e.stato !== "BIL_PUBBLICATO");
+
+  const kpiConfig = [
+    { label: "Engagement attivi",   value: data?.engAttivi ?? 0,       sub: `${engAttivi.length} in corso`,  icon: Briefcase,    variant: "default" },
+    { label: "Bilanci da chiudere", value: data?.scadenzeCount ?? 0,    sub: "Scadenze nei 14 gg",            icon: FileText,     variant: "warning" },
+    { label: "Azioni in scadenza",  value: azioni.length,               sub: `di cui ${azioni.filter(a => !a.completata).length} da fare`, icon: Clock, variant: "warning" },
+    { label: "Rischi critici",      value: data?.rischiCritici ?? 0,    sub: "Score ≥ 15",                    icon: AlertOctagon, variant: "danger" },
+  ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Dashboard"
-        subtitle="Benvenuto, Ing. Fabbricini — riepilogo aggiornato al 24 aprile 2026"
-      />
+      <PageHeader title="Dashboard" subtitle="Riepilogo aggiornato in tempo reale" />
 
-      {/* ── KPI Row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {KPI_CONFIG.map(k => {
+        {kpiConfig.map(k => {
           const s = variantStyles[k.variant];
           return (
             <div key={k.label} className={cn("bg-card border rounded-xl p-5 flex items-start gap-4", s.card)}>
@@ -66,52 +102,46 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* ── Engagement attivi (tabella centrale) ─────────────────────────── */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold">Engagement attivi</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{engAttivi.length} in corso · {engagements.length - engAttivi.length} chiusi</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {engAttivi.length} in corso · {engagements.length - engAttivi.length} chiusi
+            </p>
           </div>
           <button onClick={() => navigate("/engagements")} className="flex items-center gap-1 text-xs text-primary hover:underline">
             Vedi tutti <ArrowRight size={12} />
           </button>
         </div>
         <div className="divide-y divide-border">
-          {engagements.map(eng => (
+          {engagements.length === 0 ? (
+            <p className="px-6 py-8 text-sm text-muted-foreground text-center">Nessun engagement attivo</p>
+          ) : engagements.map(eng => (
             <div
               key={eng.id}
               onClick={() => navigate(`/engagements/${eng.id}`)}
               className="flex items-center gap-4 px-6 py-3.5 hover:bg-muted/30 cursor-pointer transition-colors"
             >
-              {/* Progress ring */}
-              <ProgressRing value={eng.progress} size={36} strokeWidth={3} />
-
-              {/* Main info */}
+              <ProgressRing value={eng.progresso ?? 0} size={36} strokeWidth={3} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded font-medium">{eng.project_code}</span>
+                  <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded font-medium">{eng.codice_progetto}</span>
                   <StatusBadge status={eng.stato} />
                 </div>
-                <p className="text-sm font-medium mt-0.5 truncate">{eng.cliente_nome}</p>
+                <p className="text-sm font-medium mt-0.5 truncate">{eng.clienti?.ragione_sociale ?? "—"}</p>
               </div>
-
-              {/* Meta */}
               <div className="hidden sm:flex items-center gap-6 text-xs text-muted-foreground shrink-0">
-                <span>{eng.anno}</span>
-                <span className="font-medium text-foreground">{eng.proc_corrente}</span>
+                <span>{eng.anno_rendicontazione}</span>
                 <StatusBadge status={eng.standard} />
               </div>
-
               <ChevronRight size={14} className="text-muted-foreground shrink-0" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Azioni oggi + Attività recente ───────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {/* Azioni del giorno */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
@@ -119,14 +149,19 @@ export default function Dashboard() {
               <span className="text-xs text-muted-foreground">{completate}/{azioni.length} completate</span>
             </div>
             <div className="mt-2.5 h-1 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(completate / azioni.length) * 100}%` }} />
+              <div
+                className="h-full bg-primary rounded-full transition-all"
+                style={{ width: azioni.length > 0 ? `${(completate / azioni.length) * 100}%` : "0%" }}
+              />
             </div>
           </div>
           <div className="divide-y divide-border max-h-72 overflow-y-auto">
-            {azioni.map(azione => (
+            {azioni.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-muted-foreground text-center">Nessuna azione per oggi</p>
+            ) : azioni.map(azione => (
               <div
                 key={azione.id}
-                onClick={() => toggleAzione(azione.id)}
+                onClick={() => toggleAzione.mutate({ id: azione.id, completata: azione.completata })}
                 className={cn("flex items-center gap-3 px-5 py-3 hover:bg-muted/30 cursor-pointer transition-colors", azione.completata && "opacity-50")}
               >
                 <div className={cn(
@@ -139,21 +174,24 @@ export default function Dashboard() {
                   <p className={cn("text-sm leading-snug", azione.completata && "line-through text-muted-foreground")}>
                     {azione.titolo}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{azione.cliente} · {azione.scadenza}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {azione.priorita} · {azione.data_azione}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Attività recente */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-sm font-semibold">Attività recente</h2>
           </div>
           <div className="px-5 py-3 space-y-3.5 max-h-72 overflow-y-auto">
-            {eventiRecenti.slice(0, 7).map(ev => {
-              const Icon = iconMap[ev.icona] || Clock;
+            {eventiRecenti.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nessuna attività recente</p>
+            ) : eventiRecenti.slice(0, 7).map(ev => {
+              const Icon = getEventIcon(ev.tipo);
               return (
                 <div key={ev.id} className="flex items-start gap-3">
                   <div className={cn(
@@ -161,12 +199,15 @@ export default function Dashboard() {
                     ev.tipo === "successo" ? "bg-green-500/10" : ev.tipo === "warning" ? "bg-amber-500/10" : "bg-muted"
                   )}>
                     <Icon size={12} className={
-                      ev.tipo === "successo" ? "text-green-600 dark:text-green-400" : ev.tipo === "warning" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                      ev.tipo === "successo" ? "text-green-600 dark:text-green-400" :
+                      ev.tipo === "warning" ? "text-amber-600 dark:text-amber-400" :
+                      "text-muted-foreground"
                     } />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-snug">{ev.testo}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{ev.tempo} · <span className="font-mono">{ev.engagement}</span></p>
+                    <p className="text-sm leading-snug">{ev.titolo}</p>
+                    {ev.descrizione && <p className="text-xs text-muted-foreground mt-0.5">{ev.descrizione}</p>}
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatRelativeTime(ev.created_at)}</p>
                   </div>
                 </div>
               );

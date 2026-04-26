@@ -5,36 +5,37 @@ import {
   BookOpen, Settings, ChevronDown, ChevronRight, GitBranch
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// TODO: Replace with Supabase hook
-const engagements = [];
+import { useEngagements } from "@/hooks/useEngagements";
 
 const navMain = [
-  { icon: LayoutDashboard, label: "Dashboard", to: "/" },
-  { icon: Users, label: "Clienti", to: "/clienti" },
-  { icon: Briefcase, label: "Engagement", to: "/engagements" },
-  { icon: GitBranch, label: "Stato Avanzamento", to: "/stato-avanzamento" },
-  { icon: BarChart3, label: "Analytics", to: "/analytics" },
+  { icon: LayoutDashboard, label: "Dashboard",        to: "/" },
+  { icon: Users,           label: "Clienti",          to: "/clienti" },
+  { icon: Briefcase,       label: "Engagement",       to: "/engagements" },
+  { icon: GitBranch,       label: "Stato Avanzamento",to: "/stato-avanzamento" },
+  { icon: BarChart3,       label: "Analytics",        to: "/analytics" },
 ];
 
 const navTools = [
-  { icon: BookOpen, label: "Cataloghi", to: "/cataloghi" },
+  { icon: BookOpen, label: "Cataloghi",    to: "/cataloghi" },
   { icon: Settings, label: "Impostazioni", to: "/impostazioni" },
 ];
 
 const statoColori = {
   MATERIALITA_IN_CORSO: "bg-green-500",
-  DATI_VALIDAZIONE: "bg-green-500",
-  BIL_PUBBLICATO: "bg-gray-900",
-  CONTRATTO_FIRMATO: "bg-purple-500",
-  ACQUISIZIONE: "bg-blue-500",
-  CRITICO: "bg-red-500",
+  DATI_VALIDAZIONE:     "bg-green-500",
+  BIL_PUBBLICATO:       "bg-gray-900",
+  CONTRATTO_FIRMATO:    "bg-purple-500",
+  ACQUISIZIONE:         "bg-blue-500",
 };
 
 export default function Sidebar({ collapsed, onToggle }) {
   const location = useLocation();
   const [engOpen, setEngOpen] = useState(false);
-  const attivi = engagements.filter(e => e.stato !== "BIL_PUBBLICATO").slice(0, 5);
+
+  const { data: engagements = [] } = useEngagements();
+  const attivi = engagements
+    .filter(e => e.stato !== "BIL_PUBBLICATO")
+    .slice(0, 5);
 
   const isActive = (to) => {
     if (to === "/") return location.pathname === "/";
@@ -47,7 +48,6 @@ export default function Sidebar({ collapsed, onToggle }) {
       collapsed ? "w-16" : "w-60"
     )}>
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        {/* Sezione principale */}
         <div className="mb-6">
           {!collapsed && (
             <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -60,9 +60,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               to={item.to}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors mb-0.5",
-                isActive(item.to)
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-muted"
+                isActive(item.to) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
               )}
             >
               <item.icon size={17} className="shrink-0" />
@@ -71,7 +69,6 @@ export default function Sidebar({ collapsed, onToggle }) {
           ))}
         </div>
 
-        {/* Engagement attivi shortcut */}
         {!collapsed && (
           <div className="mb-6">
             <button
@@ -83,6 +80,9 @@ export default function Sidebar({ collapsed, onToggle }) {
             </button>
             {engOpen && (
               <div className="space-y-0.5">
+                {attivi.length === 0 && (
+                  <p className="px-3 py-1.5 text-xs text-muted-foreground">Nessun engagement attivo</p>
+                )}
                 {attivi.map((eng) => (
                   <Link
                     key={eng.id}
@@ -90,8 +90,12 @@ export default function Sidebar({ collapsed, onToggle }) {
                     className="flex items-center gap-2 px-3 py-2 rounded-md text-xs text-foreground hover:bg-muted transition-colors group"
                   >
                     <span className={cn("w-2 h-2 rounded-full shrink-0", statoColori[eng.stato] || "bg-gray-400")} />
-                    <span className="font-mono text-xs text-muted-foreground shrink-0">{eng.project_code.split("-").slice(0,3).join("-")}</span>
-                    <span className="truncate text-foreground">{eng.cliente_nome.split(" ")[0]}</span>
+                    <span className="font-mono text-xs text-muted-foreground shrink-0">
+                      {(eng.codice_progetto ?? "").split("-").slice(0, 3).join("-")}
+                    </span>
+                    <span className="truncate text-foreground">
+                      {(eng.clienti?.ragione_sociale ?? "—").split(" ")[0]}
+                    </span>
                   </Link>
                 ))}
                 <Link to="/engagements" className="block px-3 py-1.5 text-xs text-primary hover:underline">
@@ -102,7 +106,6 @@ export default function Sidebar({ collapsed, onToggle }) {
           </div>
         )}
 
-        {/* Strumenti */}
         <div>
           {!collapsed && (
             <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -115,9 +118,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               to={item.to}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors mb-0.5",
-                isActive(item.to)
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-muted"
+                isActive(item.to) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
               )}
             >
               <item.icon size={17} className="shrink-0" />
@@ -127,7 +128,6 @@ export default function Sidebar({ collapsed, onToggle }) {
         </div>
       </nav>
 
-      {/* Footer sidebar */}
       {!collapsed && (
         <div className="p-4 border-t border-border">
           <p className="text-xs text-muted-foreground">ESG Suite v2.1</p>
