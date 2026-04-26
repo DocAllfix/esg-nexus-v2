@@ -84,6 +84,8 @@
 - [x] generate-project-code `deployed v1 2026-04-26 — smoke test PASS`
 - [x] check-deadlines `deployed v1 2026-04-26`
 - [x] send-notification-email (Resend) `deployed v1 2026-04-26 — needs RESEND_API_KEY secret`
+- [x] DB webhook `form_data → compute-engagement-progress` (Vault-based) `2026-04-26`
+- [x] pg_cron `check-deadlines` every 6h — end-to-end test PASS (200 OK) `2026-04-26`
 - [x] Storage buckets migration (00007_storage_buckets.sql) `pending`
 - [x] pg_cron documentation (SEC-001, manual setup) `pending`
 - [x] Realtime subscriptions in Dashboard `pending`
