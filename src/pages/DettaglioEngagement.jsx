@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Folder, Download, FileText, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { downloadJson } from "@/lib/csvExport";
 import PageHeader from "@/components/common/PageHeader";
 import StatusBadge from "@/components/common/StatusBadge";
 import DataGuard from "@/components/common/DataGuard";
@@ -68,7 +69,13 @@ function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors">
               <Folder size={15} /> Cartella documenti
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors">
+            <button
+              onClick={() => downloadJson(
+                `engagement-${eng?.codice_progetto ?? id}`,
+                { engagement: eng, rischi, scadenze, exportedAt: new Date().toISOString() }
+              )}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors"
+            >
               <Download size={15} /> Export dati
             </button>
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">

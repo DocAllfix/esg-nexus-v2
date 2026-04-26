@@ -248,7 +248,7 @@ export function RadioGroup({ value, onChange, options = [], inline = false }) {
         const lbl = typeof opt === "string" ? opt : opt.label;
         const checked = value === val;
         return (
-          <label key={val} className="flex items-start gap-2.5 cursor-pointer group">
+          <label key={val} onClick={() => onChange?.(val)} className="flex items-start gap-2.5 cursor-pointer group">
             <div className={cn(
               "mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
               checked ? "border-primary bg-primary" : "border-border group-hover:border-primary/50"
@@ -277,14 +277,11 @@ export function CheckboxGroup({ values = [], onChange, options = [], cols = 1 })
         const lbl = typeof opt === "string" ? opt : opt.label;
         const checked = values.includes(val);
         return (
-          <label key={val} className="flex items-start gap-2.5 cursor-pointer group">
-            <div
-              onClick={() => toggle(val)}
-              className={cn(
-                "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                checked ? "border-primary bg-primary" : "border-border group-hover:border-primary/50"
-              )}
-            >
+          <label key={val} onClick={() => toggle(val)} className="flex items-start gap-2.5 cursor-pointer group">
+            <div className={cn(
+              "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+              checked ? "border-primary bg-primary" : "border-border group-hover:border-primary/50"
+            )}>
               {checked && <CheckCircle2 size={10} className="text-primary-foreground" />}
             </div>
             <span className={cn("text-sm leading-snug", checked ? "text-foreground font-medium" : "text-muted-foreground")}>{lbl}</span>

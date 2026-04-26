@@ -1,34 +1,11 @@
-import { useEffect, useRef, useState } from "react";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 import { Cloud, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Q5 — Global sync indicator. Shows three states:
-//   busy:  any mutation or fetch in flight        (cloud + spinner)
-//   ok:    just transitioned busy -> idle, 3s     (green check)
-//   idle:  nothing happening                       (muted dot)
-//
-// Source of truth is TanStack Query's global counters; covers every hook
-// (useFormData, useClienti, useEngagements, etc) without manual wiring.
 
 export default function SyncIndicator() {
   const isMutating = useIsMutating();
   const isFetching = useIsFetching();
   const busy = isMutating > 0 || isFetching > 0;
-
-  const [justFinished, setJustFinished] = useState(false);
-  const wasBusyRef = useRef(false);
-  const timeoutRef = useRef(null);
-
-  useEffect(() => {
-    if (wasBusyRef.current && !busy) {
-      setJustFinished(true);
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => setJustFinished(false), 2500);
-    }
-    wasBusyRef.current = busy;
-    return () => clearTimeout(timeoutRef.current);
-  }, [busy]);
 
   if (busy) {
     return (
@@ -43,22 +20,6 @@ export default function SyncIndicator() {
       >
         <Cloud size={13} className="animate-pulse" />
         Sincronizzazione…
-      </span>
-    );
-  }
-
-  if (justFinished) {
-    return (
-      <span
-        className={cn(
-          "hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md",
-          "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/30"
-        )}
-        role="status"
-        aria-live="polite"
-      >
-        <Check size={13} />
-        Tutto salvato
       </span>
     );
   }

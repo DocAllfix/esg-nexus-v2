@@ -1,12 +1,92 @@
-import { Bell, Search, ChevronDown, LogOut, Settings, Menu, Sun, Moon, User } from "lucide-react";
+import { Bell, Search, ChevronDown, LogOut, Settings, Menu, Sun, Moon, User, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/api/supabaseClient";
 import SyncIndicator, { OfflineBadge } from "@/components/common/SyncIndicator";
+import { cn } from "@/lib/utils";
+
+function formatRelativeTime(isoString) {
+  if (!isoString) return "";
+  const diff = Date.now() - new Date(isoString).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "adesso";
+  if (m < 60) return `${m} min fa`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h fa`;
+  return `${Math.floor(h / 24)}g fa`;
+}
+
+function getEventIcon(tipo) {
+  if (tipo === "successo") return CheckCircle2;
+  if (tipo === "warning") return AlertTriangle;
+  return Clock;
+}
+
+function NotificationPanel() {
+  const { data: events = [] } = useQuery({
+    queryKey: ["notifiche-topbar"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("eventi_log")
+        .select("id, titolo, descrizione, tipo, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60,
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="relative p-2 rounded-md text-muted-foreground hover:bg-muted transition-colors" aria-label="Notifiche">
+          <Bell size={18} />
+          {events.length > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 p-0">
+        <div className="px-4 py-3 border-b border-border">
+          <p className="text-sm font-semibold">Notifiche recenti</p>
+        </div>
+        <div className="max-h-72 overflow-y-auto">
+          {events.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-muted-foreground text-center">Nessuna notifica</p>
+          ) : events.map(ev => {
+            const Icon = getEventIcon(ev.tipo);
+            return (
+              <div key={ev.id} className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5",
+                  ev.tipo === "successo" ? "bg-green-500/10" : ev.tipo === "warning" ? "bg-amber-500/10" : "bg-muted"
+                )}>
+                  <Icon size={12} className={
+                    ev.tipo === "successo" ? "text-green-600 dark:text-green-400" :
+                    ev.tipo === "warning" ? "text-amber-600 dark:text-amber-400" :
+                    "text-muted-foreground"
+                  } />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium leading-snug">{ev.titolo}</p>
+                  {ev.descrizione && <p className="text-xs text-muted-foreground mt-0.5">{ev.descrizione}</p>}
+                  <p className="text-xs text-muted-foreground mt-1">{formatRelativeTime(ev.created_at)}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function getInitials(user) {
   const meta = user?.user_metadata;
@@ -74,10 +154,7 @@ export default function Topbar({ onToggleSidebar, onOpenCommandPalette }) {
         {dark ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      <button className="relative p-2 rounded-md text-muted-foreground hover:bg-muted transition-colors" aria-label="Notifiche">
-        <Bell size={18} />
-        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-      </button>
+      <NotificationPanel />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

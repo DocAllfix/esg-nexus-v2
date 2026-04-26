@@ -45,11 +45,11 @@ const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 const FORMS_PER_PROC: Record<string, number> = {
   "PROC-00": 7,
-  "PROC-01": 7,
-  "PROC-02": 7,
-  "PROC-03": 7,
+  "PROC-01": 8,
+  "PROC-02": 8,
+  "PROC-03": 8,
   "PROC-04": 7,
-  "PROC-05": 7,
+  "PROC-05": 8,
   "PROC-06": 9,
   "PROC-07": 8,
 };

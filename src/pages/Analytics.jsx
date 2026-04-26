@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -65,6 +66,7 @@ export default function Analytics() {
 }
 
 function AnalyticsContent({ data, activeTab, setActiveTab, tabs }) {
+  const navigate      = useNavigate();
   const engagements   = data?.engagements ?? [];
   const fatturato     = data?.fatturato ?? [];
   const rischi        = data?.rischi ?? [];
@@ -194,7 +196,11 @@ function AnalyticsContent({ data, activeTab, setActiveTab, tabs }) {
                 {engagements.length === 0 ? (
                   <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Dati insufficienti</td></tr>
                 ) : engagements.map(e => (
-                  <tr key={e.id} className="hover:bg-muted/30">
+                  <tr
+                    key={e.id}
+                    className="hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/engagements/${e.id}`)}
+                  >
                     <td className="px-4 py-3 font-medium">{e.cliente_nome ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{e.cliente_settore ?? "—"}</td>
                     <td className="px-4 py-3 font-mono">{e.codice_progetto}</td>
@@ -286,7 +292,11 @@ function AnalyticsContent({ data, activeTab, setActiveTab, tabs }) {
             {engagements.length === 0 ? <EmptyChart message="Dati insufficienti" /> : (
               <div className="space-y-3">
                 {engagements.map(eng => (
-                  <div key={eng.id} className="flex items-center gap-3">
+                  <div
+                    key={eng.id}
+                    className="flex items-center gap-3 cursor-pointer hover:bg-muted/30 rounded-md px-2 py-1 -mx-2 transition-colors"
+                    onClick={() => navigate(`/engagements/${eng.id}`)}
+                  >
                     <span className="text-xs font-mono text-muted-foreground w-36 shrink-0">{eng.codice_progetto}</span>
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                       <div
@@ -345,7 +355,11 @@ function AnalyticsContent({ data, activeTab, setActiveTab, tabs }) {
                 {engagements.length === 0 ? (
                   <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Dati insufficienti</td></tr>
                 ) : engagements.map(e => (
-                  <tr key={e.id} className="hover:bg-muted/30">
+                  <tr
+                    key={e.id}
+                    className="hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/engagements/${e.id}`)}
+                  >
                     <td className="px-4 py-3 font-medium">{e.cliente_nome ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{e.cliente_settore ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{e.standard}</td>

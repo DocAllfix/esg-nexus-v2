@@ -2,6 +2,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/api/supabaseClient';
 
+// Fixed form counts per procedure — must match the FASI arrays in each TabProcXX/index.jsx
+// and the FORMS_PER_PROC constant in the compute-engagement-progress Edge Function.
+const PROC_FORM_TOTALS = {
+  'PROC-00': 7,
+  'PROC-01': 8,
+  'PROC-02': 8,
+  'PROC-03': 8,
+  'PROC-04': 7,
+  'PROC-05': 8,
+  'PROC-06': 9,
+  'PROC-07': 8,
+};
+
 export function useFormData(engagementId, formCode) {
   const qc = useQueryClient();
 
@@ -200,9 +213,16 @@ export function useFormStatuses(engagementId, procCode) {
     acc[r.form_code] = r.status;
     return acc;
   }, {});
-  const total = rows.length;
-  const completed = rows.filter((r) => r.status === 'completato').length;
-  const progresso = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  // Use fixed denominator from lookup — same formula as the edge function:
+  // completed=1.0, in_corso=0.5. Fallback to rows.length only if proc unknown.
+  const totalForms = PROC_FORM_TOTALS[procCode] ?? rows.length;
+  const completati = rows.filter((r) => r.status === 'completato').length;
+  const inCorso    = rows.filter((r) => r.status === 'in_corso').length;
+  const weighted   = completati + inCorso * 0.5;
+  const progresso  = totalForms > 0
+    ? Math.min(100, Math.round((weighted / totalForms) * 100))
+    : 0;
 
   return {
     statuses,
