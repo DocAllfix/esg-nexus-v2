@@ -6,13 +6,14 @@
 - [x] Cataloghi.jsx — removed crash-prone hardcoded arrays (irosAcme/kpiLibrary/ghgData) `pending`
 - [x] CommandPalette.jsx wired to useClienti + useEngagements `pending`
 
-## P2 — Supabase migrations (6 files)
-- [ ] 00001_initial_schema.sql
-- [ ] 00002_rls_policies.sql
-- [ ] 00003_views.sql
-- [ ] 00004_seed_catalogs.sql
-- [ ] 00005_triggers.sql
-- [ ] 00006_enable_realtime.sql
+## P2 — Supabase migrations (7 files, ALL applied to mjerafarrifhijkelqfr)
+- [x] 00001_initial_schema.sql — 18 public tables `applied`
+- [x] 00002_rls_policies.sql — RLS on 18/18 tables `applied`
+- [x] 00003_views.sql `applied`
+- [x] 00004_seed_catalogs.sql — 24 IRO + 19 KPI seeded `applied`
+- [x] 00005_triggers.sql — handle_new_user etc. `applied`
+- [x] 00006_enable_realtime.sql `applied`
+- [x] 00007_storage_buckets.sql — 3 buckets + 9 RLS policies `applied 2026-04-26`
 
 ## P3 — Data Access Layer (hooks + schemas)
 - [x] src/schemas/index.js — 8 Zod schemas `7ec1646`
