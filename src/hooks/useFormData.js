@@ -193,6 +193,24 @@ export function useFormData(engagementId, formCode) {
   };
 }
 
+export function useFormDataReadonly(engagementId, formCode) {
+  const query = useQuery({
+    queryKey: ['form_data', engagementId, formCode],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('form_data')
+        .select('*')
+        .eq('engagement_id', engagementId)
+        .eq('form_code', formCode)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!engagementId && !!formCode,
+  });
+  return query.data?.data ?? {};
+}
+
 export function useFormStatuses(engagementId, procCode) {
   const query = useQuery({
     queryKey: ['form_statuses', engagementId, procCode],
