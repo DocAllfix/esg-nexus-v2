@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, MinusCircle } from "lucide-react";
 
@@ -17,6 +18,7 @@ const DEFAULT_DOC_CHECK = Object.fromEntries(DOCUMENTI.map(d => [d.code, { ok: f
 
 export default function Form03H({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "03H");
+  const { data: eng } = useEngagement(engagementId);
 
   const docCheck = d?.doc_check ?? DEFAULT_DOC_CHECK;
 
@@ -44,8 +46,8 @@ export default function Form03H({ engagementId }) {
       isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={2}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
       </FormSection>
 
       <FormSection title="Checklist documenti prodotti nella Fase 3" cols={1}>
@@ -192,3 +194,4 @@ export default function Form03H({ engagementId }) {
     </FormWrapper>
   );
 }
+

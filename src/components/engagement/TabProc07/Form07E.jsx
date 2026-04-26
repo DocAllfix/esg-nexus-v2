@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -24,6 +25,7 @@ const statoColor = (s) => ({
 
 export default function Form07E({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "07E");
+  const { data: eng } = useEngagement(engagementId);
 
   const azioni = d?.azioni ?? INITIAL_AZIONI;
   const setRow = (i, k, v) => { const n = [...azioni]; n[i] = { ...n[i], [k]: v }; updateField("azioni", n); };
@@ -67,8 +69,8 @@ export default function Form07E({ engagementId }) {
       </div>
 
       <FormSection title="Informazioni incontro di follow-up" cols={3}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Data follow-up"><Input type="date" value={d?.data_followup} onChange={v => updateField("data_followup", v)} /></Field>
         <Field label="Modalità (presenza/call/email)"><Input value={d?.modalita} onChange={v => updateField("modalita", v)} placeholder="Call Teams 60 min" /></Field>
         <Field label="Partecipanti" span={2}><Input value={d?.partecipanti} onChange={v => updateField("partecipanti", v)} placeholder="Es. PM, Referente ESG cliente, CEO" /></Field>
@@ -161,3 +163,4 @@ export default function Form07E({ engagementId }) {
     </FormWrapper>
   );
 }
+

@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const STATO_COLOR = {
 
 export default function Form06E({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "06E");
+  const { data: eng } = useEngagement(engagementId);
 
   const capitoli = d?.capitoli ?? INITIAL_CAPITOLI;
   const setRow = (i, k, v) => { const n = [...capitoli]; n[i] = { ...n[i], [k]: v }; updateField("capitoli", n); };
@@ -77,8 +79,8 @@ export default function Form06E({ engagementId }) {
       </div>
 
       <FormSection title="Identificazione e parametri editoriali" cols={3}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Standard applicati"><Input value={d?.standard} onChange={v => updateField("standard", v)} placeholder="GRI / ESRS / entrambi" /></Field>
         <Field label="Data avvio redazione"><Input type="date" value={d?.data_avvio_redazione} onChange={v => updateField("data_avvio_redazione", v)} /></Field>
         <Field label="Consegna bozza a cliente"><Input type="date" value={d?.data_consegna_bozza} onChange={v => updateField("data_consegna_bozza", v)} /></Field>
@@ -158,3 +160,4 @@ export default function Form06E({ engagementId }) {
     </FormWrapper>
   );
 }
+

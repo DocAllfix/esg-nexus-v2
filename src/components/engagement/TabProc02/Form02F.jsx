@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 
 const TEMI_EXT = [
@@ -32,6 +33,7 @@ const calcolaMedia = (risposteArr) => {
 
 export default function Form02F({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02F");
+  const { data: eng } = useEngagement(engagementId);
 
   const risposte = d?.risposte ?? DEFAULT_RISPOSTE;
 
@@ -55,8 +57,8 @@ export default function Form02F({ engagementId }) {
       isSaving={isSaving}
     >
       <FormSection title="Identificazione e contatori" cols={3}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Periodo survey"><Input value={d?.periodo} onChange={v => updateField("periodo", v)} placeholder="es. 10 mar — 25 mar 2026" /></Field>
         <Field label="Totale invitati"><Input type="number" value={d?.totale_invitati} onChange={v => updateField("totale_invitati", v)} /></Field>
         <Field label="Totale risposte"><Input type="number" value={d?.totale_risposte} onChange={v => updateField("totale_risposte", v)} /></Field>
@@ -150,3 +152,4 @@ export default function Form02F({ engagementId }) {
     </FormWrapper>
   );
 }
+

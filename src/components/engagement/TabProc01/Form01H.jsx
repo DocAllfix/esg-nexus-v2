@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea, RadioGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
 
@@ -69,6 +70,7 @@ const TOTAL_ITEMS = SETUP_GRUPPI.reduce((acc, g) => acc + g.items.length, 0);
 
 export default function Form01H({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "01H");
+  const { data: eng } = useEngagement(engagementId);
 
   const checked = d?.checked ?? {};
   const toggle = (key) => updateField("checked", { ...checked, [key]: !checked[key] });
@@ -96,8 +98,8 @@ export default function Form01H({ engagementId }) {
       isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={4}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="PM responsabile"><Input value={d?.pm} onChange={v => updateField("pm", v)} /></Field>
         <Field label="Data completamento"><Input type="date" value={d?.data_completamento} onChange={v => updateField("data_completamento", v)} /></Field>
       </FormSection>
@@ -183,3 +185,4 @@ export default function Form01H({ engagementId }) {
     </FormWrapper>
   );
 }
+

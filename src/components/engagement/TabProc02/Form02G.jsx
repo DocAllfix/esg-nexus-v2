@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ const catColors = {
 
 export default function Form02G({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02G");
+  const { data: eng } = useEngagement(engagementId);
 
   const scores = d?.scores ?? {};
 
@@ -92,8 +94,8 @@ export default function Form02G({ engagementId }) {
       isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={3}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Analista responsabile"><Input value={d?.analista} onChange={v => updateField("analista", v)} /></Field>
         <Field label="Data elaborazione"><Input type="date" value={d?.data_elab} onChange={v => updateField("data_elab", v)} /></Field>
         <Field label="N. questionari interni raccolti"><Input value={d?.n_quest_int} onChange={v => updateField("n_quest_int", v)} placeholder="n. / % su target" /></Field>
@@ -239,3 +241,4 @@ export default function Form02G({ engagementId }) {
     </FormWrapper>
   );
 }
+

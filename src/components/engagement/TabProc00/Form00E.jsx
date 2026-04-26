@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import FormWrapper, { FormSection, Field, Input, Textarea, Select, CheckboxGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 
 export default function Form00E({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "00E");
+  const { data: eng } = useEngagement(engagementId);
 
   const piano = d?.piano ?? [];
   const eco = d?.economics ?? {};
@@ -44,7 +46,7 @@ export default function Form00E({ engagementId }) {
           <Input type="date" value={d?.data_emissione} onChange={v => updateField("data_emissione", v)} />
         </Field>
         <Field label="Cliente" required>
-          <Input value={d?.cliente} onChange={v => updateField("cliente", v)} />
+          <Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} />
         </Field>
         <Field label="P.IVA Cliente">
           <Input value={d?.piva} onChange={v => updateField("piva", v)} className="font-mono" />
@@ -234,3 +236,4 @@ export default function Form00E({ engagementId }) {
     </FormWrapper>
   );
 }
+

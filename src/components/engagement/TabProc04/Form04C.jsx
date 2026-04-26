@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const DEFAULT_KPI = Object.fromEntries(KPI_IDS.map(id => [id, { N1: "", N: "", s
 
 export default function Form04C({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "04C");
+  const { data: eng } = useEngagement(engagementId);
 
   const kpiData = d?.kpi_data ?? DEFAULT_KPI;
   const setKpi = (id, field, value) => updateField("kpi_data", { ...kpiData, [id]: { ...(kpiData[id] || {}), [field]: value } });
@@ -78,8 +80,8 @@ export default function Form04C({ engagementId }) {
       </div>
 
       <FormSection title="Identificazione" cols={3}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Anno di rendicontazione (N)"><Input type="number" value={d?.anno_rend} onChange={v => updateField("anno_rend", v)} /></Field>
         <Field label="Anno N-1 (per confronto)"><Input type="number" value={d?.anno_N1} onChange={v => updateField("anno_N1", v)} /></Field>
         <Field label="Raccolto da"><Input value={d?.raccolto_da} onChange={v => updateField("raccolto_da", v)} /></Field>
@@ -150,3 +152,4 @@ export default function Form04C({ engagementId }) {
     </FormWrapper>
   );
 }
+

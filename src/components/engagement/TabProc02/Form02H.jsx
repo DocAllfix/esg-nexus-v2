@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 
 const SOGLIA_IMP = 3.0;
@@ -34,6 +35,7 @@ const TEMI = [
 
 export default function Form02H({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "02H");
+  const { data: eng } = useEngagement(engagementId);
 
   const scoreImp = d?.score_imp ?? {};
   const scoreFin = d?.score_fin ?? {};
@@ -131,8 +133,8 @@ export default function Form02H({ engagementId }) {
       isSaving={isSaving}
     >
       <FormSection title="Identificazione" cols={4}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Versione">
           <Select value={d?.versione} onChange={v => updateField("versione", v)} options={[
             { value: "bozza", label: "Bozza" },
@@ -266,3 +268,4 @@ export default function Form02H({ engagementId }) {
     </FormWrapper>
   );
 }
+

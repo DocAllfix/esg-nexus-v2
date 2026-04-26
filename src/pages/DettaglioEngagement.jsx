@@ -49,7 +49,7 @@ export default function DettaglioEngagement() {
 }
 
 function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
-  const clienteNome = eng?.clienti?.nome ?? "—";
+  const clienteNome = eng?.clienti?.ragione_sociale ?? "—";
   const rischiAlti = rischi
     .filter(r => r.score >= 15 || r.score >= 12)
     .sort((a, b) => b.score - a.score)

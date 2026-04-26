@@ -1,5 +1,6 @@
-import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
+﻿import FormWrapper, { FormSection, Field, Input, Textarea, Select, RadioGroup } from "@/components/common/FormWrapper";
 import { useFormData } from "@/hooks/useFormData";
+import { useEngagement } from "@/hooks/useEngagements";
 import { cn } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -28,6 +29,7 @@ const SBTI_PATHS = [
 
 export default function Form05C({ engagementId }) {
   const { data: d, status, updateField, updateStatus, saveForm, isSaving } = useFormData(engagementId, "05C");
+  const { data: eng } = useEngagement(engagementId);
 
   const targets = d?.targets ?? [];
   const setRow = (i, k, v) => { const n = [...targets]; n[i] = { ...n[i], [k]: v }; updateField("targets", n); };
@@ -78,8 +80,8 @@ export default function Form05C({ engagementId }) {
       </div>
 
       <FormSection title="Identificazione e parametri temporali" cols={4}>
-        <Field label="Codice progetto"><Input value={d?.codice_progetto} onChange={v => updateField("codice_progetto", v)} /></Field>
-        <Field label="Cliente"><Input value={d?.cliente} onChange={v => updateField("cliente", v)} /></Field>
+        <Field label="Codice progetto"><Input value={d?.codice_progetto ?? eng?.codice_progetto ?? ""} onChange={v => updateField("codice_progetto", v)} /></Field>
+        <Field label="Cliente"><Input value={d?.cliente ?? eng?.clienti?.ragione_sociale ?? ""} onChange={v => updateField("cliente", v)} /></Field>
         <Field label="Anno baseline"><Input type="number" value={d?.anno_baseline} onChange={v => updateField("anno_baseline", v)} /></Field>
         <Field label="Target anno 1"><Input type="number" value={d?.anno_target_1} onChange={v => updateField("anno_target_1", v)} /></Field>
         <Field label="Target anno 2"><Input type="number" value={d?.anno_target_2} onChange={v => updateField("anno_target_2", v)} /></Field>
@@ -183,3 +185,4 @@ export default function Form05C({ engagementId }) {
     </FormWrapper>
   );
 }
+
