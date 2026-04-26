@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Building2, Eye } from "lucide-react";
+import { Plus, Search, Building2, Eye, Download } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import DataGuard from "@/components/common/DataGuard";
 import NuovoClienteDrawer from "@/components/clienti/NuovoClienteDrawer";
 import { useClienti } from "@/hooks/useClienti";
 import { useEngagements } from "@/hooks/useEngagements";
+import { downloadCsv, timestampedFilename } from "@/lib/csvExport";
 
 const settoriColors = {
   "Automotive":     "bg-blue-100 text-blue-800",
@@ -37,12 +38,40 @@ export default function Clienti() {
           breadcrumbs={[{ label: "Clienti" }]}
           subtitle={`${clienti.length} clienti nel portafoglio`}
           actions={
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus size={16} /> Nuovo cliente
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => downloadCsv(
+                  timestampedFilename('clienti'),
+                  filtered,
+                  [
+                    { key: 'ragione_sociale', label: 'Ragione sociale' },
+                    { key: 'piva',            label: 'P.IVA' },
+                    { key: 'codice_fiscale',  label: 'Codice fiscale' },
+                    { key: 'ateco',           label: 'ATECO' },
+                    { key: 'settore',         label: 'Settore' },
+                    { key: 'dipendenti',      label: 'Dipendenti' },
+                    { key: 'fatturato_eur',   label: 'Fatturato (€)' },
+                    { key: 'nazione',         label: 'Nazione' },
+                    { key: 'indirizzo',       label: 'Indirizzo' },
+                    { key: 'sito_web',        label: 'Sito web' },
+                    { key: 'note',            label: 'Note' },
+                    { label: 'Engagement',    transform: r => getEngagementCount(r.id) },
+                    { key: 'created_at',      label: 'Creato il' },
+                  ]
+                )}
+                disabled={filtered.length === 0}
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={filtered.length === 0 ? "Nessun dato da esportare" : "Esporta i clienti filtrati come CSV"}
+              >
+                <Download size={15} /> Esporta CSV
+              </button>
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Plus size={16} /> Nuovo cliente
+              </button>
+            </div>
           }
         />
 

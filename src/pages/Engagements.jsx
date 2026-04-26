@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye } from "lucide-react";
+import { Plus, Search, Eye, Download } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import StatusBadge from "@/components/common/StatusBadge";
 import ProgressRing from "@/components/common/ProgressRing";
 import DataGuard from "@/components/common/DataGuard";
 import NuovoEngagementDialog from "@/components/engagement/NuovoEngagementDialog";
 import { useEngagements } from "@/hooks/useEngagements";
+import { downloadCsv, timestampedFilename } from "@/lib/csvExport";
 
 const STATI    = ["Tutti", "MATERIALITA_IN_CORSO", "DATI_VALIDAZIONE", "BIL_PUBBLICATO", "CONTRATTO_FIRMATO"];
 const STANDARD = ["Tutti", "GRI", "CSRD_ESRS", "ENTRAMBI"];
@@ -43,12 +44,38 @@ export default function Engagements() {
           breadcrumbs={[{ label: "Engagement" }]}
           subtitle={`${engagements.length} engagement totali · ${attivi} attivi`}
           actions={
-            <button
-              onClick={() => setDialogOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus size={16} /> Nuovo engagement
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => downloadCsv(
+                  timestampedFilename('engagements'),
+                  filtered,
+                  [
+                    { key: 'codice_progetto',      label: 'Project code' },
+                    { label: 'Cliente',            transform: e => e.clienti?.ragione_sociale ?? '' },
+                    { key: 'anno_rendicontazione', label: 'Anno' },
+                    { key: 'standard',             label: 'Standard' },
+                    { key: 'stato',                label: 'Stato' },
+                    { key: 'progresso',            label: 'Progresso (%)' },
+                    { key: 'data_avvio',           label: 'Data avvio' },
+                    { key: 'data_fine_prevista',   label: 'Chiusura prev.' },
+                    { key: 'data_fine_effettiva',  label: 'Chiusura effettiva' },
+                    { key: 'budget_contrattuale',  label: 'Budget (€)' },
+                    { key: 'created_at',           label: 'Creato il' },
+                  ]
+                )}
+                disabled={filtered.length === 0}
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={filtered.length === 0 ? "Nessun dato da esportare" : "Esporta gli engagement filtrati come CSV"}
+              >
+                <Download size={15} /> Esporta CSV
+              </button>
+              <button
+                onClick={() => setDialogOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Plus size={16} /> Nuovo engagement
+              </button>
+            </div>
           }
         />
 

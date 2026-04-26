@@ -6,6 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAuth } from "@/lib/AuthContext";
+import SyncIndicator, { OfflineBadge } from "@/components/common/SyncIndicator";
 
 function getInitials(user) {
   const meta = user?.user_metadata;
@@ -61,6 +62,9 @@ export default function Topbar({ onToggleSidebar, onOpenCommandPalette }) {
       </button>
 
       <div className="flex-1" />
+
+      <OfflineBadge />
+      <SyncIndicator />
 
       <button
         onClick={toggle}

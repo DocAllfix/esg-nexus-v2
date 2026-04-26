@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// ISO date string YYYY-MM-DD; accepts empty string for "not set"
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data non valida (formato YYYY-MM-DD)');
+
+const dateOptional = dateString.optional().or(z.literal(''));
+
 export const clienteSchema = z.object({
   ragione_sociale: z.string().min(1, 'Ragione sociale obbligatoria'),
   piva: z
@@ -22,9 +29,11 @@ export const engagementSchema = z.object({
   cliente_id: z.string().uuid('Cliente obbligatorio'),
   anno_rendicontazione: z.coerce.number().int().min(2020).max(2035),
   standard: z.enum(['GRI', 'CSRD_ESRS', 'ENTRAMBI']),
-  data_avvio: z.string().optional(),
-  data_fine_prevista: z.string().optional(),
+  data_avvio: dateOptional,
+  data_fine_prevista: dateOptional,
+  data_fine_effettiva: dateOptional,
   budget_contrattuale: z.coerce.number().int().nonnegative().optional(),
+  note: z.string().optional(),
 });
 
 export const rischioSchema = z.object({
@@ -47,7 +56,7 @@ export const scadenzaSchema = z.object({
   engagement_id: z.string().uuid(),
   titolo: z.string().min(1, 'Titolo obbligatorio'),
   descrizione: z.string().optional(),
-  data_scadenza: z.string(),
+  data_scadenza: dateString,
   priorita: z.enum(['bassa', 'media', 'alta', 'critica']).default('media'),
 });
 

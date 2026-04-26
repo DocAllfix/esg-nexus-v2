@@ -10,6 +10,7 @@ export function useFormData(engagementId, formCode) {
   const statusRef = useRef('non_iniziato');
   const timerRef = useRef(null);
   const tokenRef = useRef(null);
+  const inFlightRef = useRef(null); // serialize concurrent flushes (M4)
 
   const [localData, setLocalData] = useState({});
   const [status, setStatus] = useState('non_iniziato');
@@ -53,27 +54,48 @@ export function useFormData(engagementId, formCode) {
 
   const flushToSupabase = useCallback(async () => {
     if (!pendingRef.current) return;
+
+    // Serialize concurrent flushes: if one is in-flight, wait for it to
+    // complete before starting the next. Without this, two HTTP POSTs from
+    // back-to-back debounced flushes could arrive at Postgres out-of-order
+    // and the older snapshot would overwrite the newer one (the upsert REPLACES
+    // the JSONB `data` column, it doesn't merge it).
+    if (inFlightRef.current) {
+      await inFlightRef.current.catch(() => {});
+      // After the wait, another caller may have already drained the pending
+      // state (it set pendingRef = false before its await). Re-check.
+      if (!pendingRef.current) return;
+    }
+
     pendingRef.current = false;
     const snapshot = { ...dataRef.current };
+    const snapshotStatus = statusRef.current;
+
     setIsSaving(true);
-    try {
-      const { error } = await supabase.from('form_data').upsert(
-        {
-          engagement_id: engagementId,
-          form_code: formCode,
-          proc_code: `PROC-${formCode.substring(0, 2)}`,
-          status: statusRef.current,
-          data: snapshot,
-        },
-        { onConflict: 'engagement_id,form_code' }
-      );
-      if (error) throw error;
-      qc.invalidateQueries({
-        queryKey: ['form_statuses', engagementId],
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    const promise = (async () => {
+      try {
+        const { error } = await supabase.from('form_data').upsert(
+          {
+            engagement_id: engagementId,
+            form_code: formCode,
+            proc_code: `PROC-${formCode.substring(0, 2)}`,
+            status: snapshotStatus,
+            data: snapshot,
+          },
+          { onConflict: 'engagement_id,form_code' }
+        );
+        if (error) throw error;
+        qc.invalidateQueries({
+          queryKey: ['form_statuses', engagementId],
+        });
+      } finally {
+        setIsSaving(false);
+        inFlightRef.current = null;
+      }
+    })();
+
+    inFlightRef.current = promise;
+    return promise;
   }, [engagementId, formCode, qc]);
 
   const updateField = useCallback(

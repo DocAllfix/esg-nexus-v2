@@ -88,7 +88,26 @@ function DashboardContent({ data }) {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+    // Optimistic update: flip the checkbox in the cache immediately.
+    onMutate: async ({ id, completata }) => {
+      await qc.cancelQueries({ queryKey: ["dashboard"] });
+      const prev = qc.getQueryData(["dashboard"]);
+      qc.setQueryData(["dashboard"], (old) =>
+        old
+          ? {
+              ...old,
+              azioni: (old.azioni ?? []).map((a) =>
+                a.id === id ? { ...a, completata: !completata } : a
+              ),
+            }
+          : old
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) qc.setQueryData(["dashboard"], context.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
   const azioni = data?.azioni ?? [];

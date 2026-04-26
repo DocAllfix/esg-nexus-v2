@@ -117,10 +117,35 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload = (await req.json()) as WebhookPayload;
+    const raw = await req.json().catch(() => null);
+    if (!raw || typeof raw !== "object") {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const payload = raw as Partial<WebhookPayload>;
+
+    // Strict validation: webhook from Postgres trigger always has these fields.
+    // Anything else is rejected with 400, not silently 500'd.
+    const validType = ["INSERT", "UPDATE", "DELETE"].includes(payload.type as string);
+    if (!validType || typeof payload.table !== "string" || typeof payload.schema !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid webhook envelope" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (payload.table !== "form_data" || payload.schema !== "public") {
+      return new Response(JSON.stringify({ skipped: "unsupported table/schema" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const row = payload.record ?? payload.old_record;
-    if (!row?.engagement_id) {
-      return new Response(JSON.stringify({ skipped: "no engagement_id" }), {
+    if (!row || typeof row.engagement_id !== "string" || row.engagement_id.length < 32) {
+      return new Response(JSON.stringify({ skipped: "no valid engagement_id" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

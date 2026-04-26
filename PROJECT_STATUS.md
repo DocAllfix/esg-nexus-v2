@@ -94,3 +94,36 @@
 - [x] Vitest + tests (5 tests, 3 files: useClienti, useFormData, useEngagements) `pending`
 - [x] E2E_SCENARIOS.md (5 Playwright scenarios documented) `pending`
 - [ ] Vercel deploy + env vars (post-merge)
+
+## P7 — Pre-test audit fixes (deep audit 2026-04-26)
+
+### Critical (DB + edge function)
+- [x] C1 — Indici FK mancanti su iro_engagement.catalogo_iro_id e azioni_giorno.engagement_id `applied`
+- [x] C3 — Trigger BEFORE INSERT generate_codice_progetto con advisory lock anti-race `applied + migration 00008`
+- [x] C4 — compute-engagement-progress: validation strict del payload webhook (envelope + table + schema + engagement_id) `re-deployed v2`
+
+### Major
+- [x] M1+M3 — Date validation regex YYYY-MM-DD + campi note/data_fine_effettiva in engagementSchema
+- [x] M4 — useFormData: serializzazione dei flush concorrenti via inFlightRef (anti out-of-order race)
+
+### UX / Perf
+- [x] Q1 — Code splitting con lazy routes: index.js da 1581 KB → 555 KB, 9 chunk lazy
+- [x] Q2 — Optimistic update su azioni_giorno toggle (UX istantanea)
+- [x] Q5 — SyncIndicator + OfflineBadge globali in Topbar (useIsMutating/useIsFetching)
+- [x] Q4 — Esport CSV su Clienti + Engagements (no PDF/Word, RFC 4180 + UTF-8 BOM)
+
+### Cleanup deps (Batch B+C: 35 file shadcn rimossi + 29 npm deps)
+- [x] P3 — chart.jsx eliminato
+- [x] P2 — form.jsx + react-hook-form + @hookform/resolvers eliminati
+- [x] P1 — 33 altri file shadcn unused + 27 deps (next-themes, vaul, cmdk, sonner, embla, input-otp, react-resizable-panels, 19 @radix-ui orfani)
+
+### DevOps
+- [x] I1 — GitHub Actions CI workflow: lint + test + build su push/PR
+
+### Skipped (con motivazione)
+- [ ] C2 — bottoni PDF/Word in FormWrapper: utente vuole analizzare a parte
+- [ ] M2 — RPC get_dashboard_data: overkill per single-user, defer post-MVP
+- [ ] M5 — CSP nonce-based: alto rischio regressione dev mode, defer
+- [ ] Q3 — Quick-create da CommandPalette: scope creep, defer
+- [ ] I2 — Sentry: richiede DSN account utente
+- [ ] I3 — backup off-site schedulato: richiede decisione destinazione
