@@ -17,6 +17,7 @@ const Clienti             = lazy(() => import('@/pages/Clienti'));
 const DettaglioCliente    = lazy(() => import('@/pages/DettaglioCliente'));
 const Engagements         = lazy(() => import('@/pages/Engagements'));
 const DettaglioEngagement = lazy(() => import('@/pages/DettaglioEngagement'));
+const GeneraBilancio      = lazy(() => import('@/pages/GeneraBilancio'));
 const Cataloghi           = lazy(() => import('@/pages/Cataloghi'));
 const Impostazioni        = lazy(() => import('@/pages/Impostazioni'));
 const Analytics           = lazy(() => import('@/pages/Analytics'));
@@ -55,6 +56,7 @@ function AppRoutes() {
           <Route path="/clienti/:id" element={<DettaglioCliente />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/engagements/:id" element={<DettaglioEngagement />} />
+          <Route path="/engagements/:id/bilancio" element={<GeneraBilancio />} />
           <Route path="/cataloghi" element={<Cataloghi />} />
           <Route path="/impostazioni" element={<Impostazioni />} />
           <Route path="/analytics" element={<Analytics />} />

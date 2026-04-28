@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Folder, Download, FileText, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { downloadJson } from "@/lib/csvExport";
@@ -49,6 +49,7 @@ export default function DettaglioEngagement() {
 }
 
 function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
+  const navigate = useNavigate();
   const clienteNome = eng?.clienti?.ragione_sociale ?? "—";
   const rischiAlti = rischi
     .filter(r => r.score >= 15 || r.score >= 12)
@@ -78,7 +79,10 @@ function DettaglioContent({ id, eng, rischi, scadenze, tab, setTab }) {
             >
               <Download size={15} /> Export dati
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+            <button
+              onClick={() => navigate(`/engagements/${id}/bilancio`)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
               <FileText size={15} /> Genera bilancio
             </button>
           </div>
